@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using CoreGCBench.Common;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
@@ -77,30 +78,30 @@ namespace CoreGCBench.Runner
         private static bool ValidateConfig(BenchmarkRun run)
         {
             Logger.LogVerbose("Validating configuration");
-            foreach (var version in run.CoreCLRVersions)
+            foreach (var version in run.CoreClrVersions)
             {
-                if (version.HumanReadableName.Any(c => Path.GetInvalidPathChars().Contains(c))
-                    || string.IsNullOrEmpty(version.HumanReadableName))
+                if (version.Name.Any(c => Path.GetInvalidPathChars().Contains(c))
+                    || string.IsNullOrEmpty(version.Name))
                 {
-                    Logger.LogAlways($"Version name \"{version.HumanReadableName}\" has inapporpriate characters for a file path.");
+                    Logger.LogAlways($"Version name \"{version.Name}\" has inapporpriate characters for a file path.");
                     return false;
                 }
 
-                if (!Directory.Exists(version.CoreRootPath))
+                if (!Directory.Exists(version.Path))
                 {
-                    Logger.LogAlways($"Version path {version.CoreRootPath} does not exist.");
+                    Logger.LogAlways($"Version path {version.Path} does not exist.");
                     return false;
                 }
 
-                string coreRun = Path.Combine(version.CoreRootPath, Utils.CoreRunName);
+                string coreRun = Path.Combine(version.Path, Utils.CoreRunName);
                 if (!File.Exists(coreRun))
                 {
-                    Logger.LogAlways($"Corerun not found on path {version.CoreRootPath}.");
+                    Logger.LogAlways($"Corerun not found on path {version.Path}.");
                     return false;
                 }
             }
 
-            if (run.CoreCLRVersions.Count == 0)
+            if (run.CoreClrVersions.Count == 0)
             {
                 Logger.LogAlways("Must provide at least one version of CoreCLR to test.");
                 return false;

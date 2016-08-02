@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using CoreGCBench.Common;
 using System.Diagnostics;
 using System.IO;
 
@@ -50,13 +51,13 @@ namespace CoreGCBench.Runner
         public RunResult Run()
         {
             RunResult result = new RunResult();
-            foreach (var version in m_run.CoreCLRVersions)
+            foreach (var version in m_run.CoreClrVersions)
             {
-                Logger.LogAlways($"Beginning run of version \"{version.HumanReadableName}\"");
+                Logger.LogAlways($"Beginning run of version \"{version.Name}\"");
                 // these should have been validated already before runnning
-                Debug.Assert(!string.IsNullOrEmpty(version.CoreRootPath));
-                Debug.Assert(!string.IsNullOrEmpty(version.HumanReadableName));
-                Debug.Assert(Directory.Exists(version.CoreRootPath));
+                Debug.Assert(!string.IsNullOrEmpty(version.Path));
+                Debug.Assert(!string.IsNullOrEmpty(version.Name));
+                Debug.Assert(Directory.Exists(version.Path));
                 CoreclrVersionRunResult versionResult = RunVersion(version);
                 result.PerVersionResults[version] = versionResult;
             }
@@ -77,7 +78,7 @@ namespace CoreGCBench.Runner
             Debug.Assert(Directory.GetCurrentDirectory() == m_options.OutputDirectory);
             // TODO(segilles) error handling here. We should avoid propegating exceptions
             // as best we can.
-            string folderName = Path.Combine(Directory.GetCurrentDirectory(), version.HumanReadableName);
+            string folderName = Path.Combine(Directory.GetCurrentDirectory(), version.Name);
             Directory.CreateDirectory(folderName);
             Directory.SetCurrentDirectory(folderName);
             try
@@ -147,7 +148,7 @@ namespace CoreGCBench.Runner
             // after some amount of time elapses, etc. This can all be done here with
             // some work.
 
-            string coreRun = Path.Combine(version.CoreRootPath, Utils.CoreRunName);
+            string coreRun = Path.Combine(version.Path, Utils.CoreRunName);
             Debug.Assert(File.Exists(coreRun));
             Debug.Assert(File.Exists(bench.ExecutablePath));
 

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using CoreGCBench.Common;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -32,38 +33,7 @@ namespace CoreGCBench.Runner
         /// are paths to CORE_ROOTS for each version of CoreCLR that was built.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public List<CoreClrVersion> CoreCLRVersions { get; set; }
-    }
-
-    /// <summary>
-    /// A CoreCLR version that we will be running benchmarks on.
-    /// </summary>
-    public class CoreClrVersion
-    {
-        [JsonProperty(Required = Required.Always)]
-        public string HumanReadableName { get; set; }
-
-        [JsonProperty(Required = Required.Always)]
-        public string CoreRootPath { get; set; }
-
-        public override int GetHashCode()
-        {
-            int hash1 = HumanReadableName.GetHashCode();
-            int hash2 = CoreRootPath.GetHashCode();
-            return (((hash1 << 5) + hash1) ^ hash2);
-        }
-
-        public override bool Equals(object obj)
-        {
-            CoreClrVersion other = obj as CoreClrVersion;
-            if (other == null)
-            {
-                return false;
-            }
-
-            return other.HumanReadableName.Equals(HumanReadableName)
-                && other.CoreRootPath.Equals(CoreRootPath);
-        }
+        public List<CoreClrVersion> CoreClrVersions { get; set; }
     }
 
     [Flags]
