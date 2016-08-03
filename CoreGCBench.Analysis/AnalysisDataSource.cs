@@ -8,6 +8,10 @@ using System.Collections.Generic;
 using System.IO.Compression;
 using System.IO;
 using Microsoft.Diagnostics.Tracing.Analysis;
+using System.Diagnostics;
+using Newtonsoft.Json;
+using Microsoft.Diagnostics.Tracing;
+using System.Linq;
 
 namespace CoreGCBench.Analysis
 {
@@ -48,13 +52,26 @@ namespace CoreGCBench.Analysis
         #region IDisposable Implementation
         private bool disposedValue = false;
 
-        void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (m_rootDir != null)
                 {
                     Directory.Delete(m_rootDir);
+                }
+
+                if (disposing)
+                {
+                    if (Versions != null)
+                    {
+                        foreach (var version in Versions)
+                        {
+                            version.Dispose();
+                        }
+                    }
+
+                    Versions = null;
                 }
 
                 disposedValue = true;
@@ -78,7 +95,7 @@ namespace CoreGCBench.Analysis
     /// A data source for analysis, pertaining to a single version of
     /// CoreCLR tested as part of a benchmark run.
     /// </summary>
-    public sealed class VersionAnalysisDataSource
+    public sealed class VersionAnalysisDataSource : IDisposable
     {
         /// <summary>
         /// The version of CoreCLR that this data came from.
@@ -98,10 +115,30 @@ namespace CoreGCBench.Analysis
                 BenchmarkResults.Add(new BenchmarkDataSource(benchmarkFolder));
             }
         }
+
+        public void Dispose()
+        {
+            if (BenchmarkResults != null)
+            {
+                foreach (var bench in BenchmarkResults)
+                {
+                    bench.Dispose();
+                }
+            }
+
+            BenchmarkResults = null;
+        }
     }
 
-    public sealed class BenchmarkDataSource
+    public sealed class BenchmarkDataSource : IDisposable
     {
+        /// <summary>
+        /// The TraceEventSource we constructed to parse the trace.
+        /// The lifetime of the below TraceLoadedDotNetRuntime is tied
+        /// to the lifetime of this class.
+        /// </summary>
+        private TraceEventSource m_source;
+
         /// <summary>
         /// The TraceEvent TraceGC object obtained by analyzing this benchmark's
         /// trace, or null if a trace was not gathered.
@@ -131,12 +168,40 @@ namespace CoreGCBench.Analysis
 
         public BenchmarkDataSource(string benchmarkFolder)
         {
-            // TODO(segilles):
-            //   1) locate the trace, send it through TraceEvent, get the
-            //      TraceLoadedDotNetRuntime out of it
-            //   2) locate the runner output json, use it to populate the
-            //      rest of the fields.
-            throw new NotImplementedException();
+            // there should be a results.json file in this directory,
+            // dumped by the runner.
+
+            // TODO(segilles) need to be wary of invalid input over the next
+            // three lines
+
+            /*
+            string resultFile = Path.Combine(benchmarkFolder, Constants.BenchmarkJsonName);
+            Debug.Assert(File.Exists(resultFile));
+            BenchmarkResult bench = JsonConvert.DeserializeObject<BenchmarkResult>(File.ReadAllText(resultFile));
+
+            Debug.Assert(File.Exists(bench.TracePathLocation));
+
+            // TODO(segilles, xplat) LTTNG.
+            // We deliberately don't dispose this event source here since we
+            // are moving ownership to the object being constructed.
+            var source = new ETWTraceEventSource(bench.TracePathLocation);
+            source.NeedLoadedDotNetRuntimes();
+            source.Process();
+            // TODO(segilles) find the right process.
+            Trace = source.Processes()
+                .First()
+                .LoadedDotNetRuntime();
+            Benchmark = bench.Benchmark;
+            TraceLocation = bench.TracePathLocation;
+            DurationMsec = bench.DurationMsec;
+            ExitCode = bench.ExitCode;
+            */
+        }
+
+        public void Dispose()
+        {
+            m_source?.Dispose();
+            m_source = null;
         }
     }
 }

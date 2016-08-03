@@ -20,7 +20,7 @@ namespace CoreGCBench.Runner
         /// The benchmark suite to run as part of this benchmark run.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public List<Benchmark> Suite { get; set; }
+        public IList<Benchmark> Suite { get; set; } = new List<Benchmark>();
 
         /// <summary>
         /// The data to collect during the benchmark run.
@@ -33,7 +33,7 @@ namespace CoreGCBench.Runner
         /// are paths to CORE_ROOTS for each version of CoreCLR that was built.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public List<CoreClrVersion> CoreClrVersions { get; set; }
+        public IList<CoreClrVersion> CoreClrVersions { get; set; } = new List<CoreClrVersion>();
     }
 
     [Flags]

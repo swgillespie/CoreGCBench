@@ -28,5 +28,7 @@ namespace CoreGCBench.Analysis
         {
             m_metrics.Add(metric);
         }
+
+        public IEnumerable<Metric> Metrics => m_metrics;
     }
 }

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace CoreGCBench.Runner
@@ -30,12 +31,12 @@ namespace CoreGCBench.Runner
         /// </summary>
         /// <param name="v">The verbosity of this message</param>
         /// <param name="fmt">A format string to print</param>
-        /// <param name="args">Arguments for the format string</param>
-        public static void Log(Verbosity v, string fmt, params object[] args)
+        public static void Log(Verbosity v, string fmt)
         {
             if (v <= m_options.Verbosity)
             {
-                m_options.LogStream.WriteLine(fmt, args);
+                var timestamp = DateTime.Now.ToString("[MM-dd HH:mm:ss] ");
+                m_options.LogStream.WriteLine(timestamp + fmt);
             }
         }
 
@@ -44,10 +45,9 @@ namespace CoreGCBench.Runner
         /// to the user.
         /// </summary>
         /// <param name="fmt">A format string to print</param>
-        /// <param name="args">Arguments for the format string</param>
-        public static void LogAlways(string fmt, params object[] args)
+        public static void LogAlways(string fmt)
         {
-            Log(Verbosity.None, fmt, args);
+            Log(Verbosity.None, fmt);
         }
 
         /// <summary>
@@ -55,10 +55,9 @@ namespace CoreGCBench.Runner
         /// if the -v option is given.
         /// </summary>
         /// <param name="fmt">A format string to print</param>
-        /// <param name="args">Arguments for the format string</param>
-        public static void LogVerbose(string fmt, params object[] args)
+        public static void LogVerbose(string fmt)
         {
-            Log(Verbosity.Verbose, fmt, args);
+            Log(Verbosity.Verbose, fmt);
         }
 
         /// <summary>
@@ -66,10 +65,35 @@ namespace CoreGCBench.Runner
         /// if the -d option is given.
         /// </summary>
         /// <param name="fmt">A format string to print</param>
-        /// <param name="args">Arguments for the format string</param>
-        public static void LogDiagnostic(string fmt, params object[] args)
+        public static void LogDiagnostic(string fmt)
         {
-            Log(Verbosity.Diagnostic, fmt, args);
+            Log(Verbosity.Diagnostic, fmt);
+        }
+
+        /// <summary>
+        /// Logs a message that will always be echoed to console,
+        /// with an additional color indicating that it's a warning.
+        /// </summary>
+        /// <param name="fmt">A string to print</param>
+        public static void LogWarning(string fmt)
+        {
+            var old = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            LogAlways(fmt);
+            Console.ForegroundColor = old;
+        }
+
+        /// <summary>
+        /// Logs a message that will always be echoed to console,
+        /// with an additional color indicating that it's an error.
+        /// </summary>
+        /// <param name="fmt">A string to print</param>
+        public static void LogError(string fmt)
+        {
+            var old = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            LogAlways(fmt);
+            Console.ForegroundColor = old;
         }
     }
 

@@ -29,11 +29,23 @@ namespace CoreGCBench.Common
     /// </summary>
     public sealed class BenchmarkResult
     {
+        public Benchmark Benchmark { get; set; }
+        public IList<IterationResult> Iterations { get; set; } = new List<IterationResult>();
+    }
+
+    /// <summary>
+    /// The result of a single iteration of a benchmark.
+    /// </summary>
+    public sealed class IterationResult
+    {
         public string TracePathLocation { get; set; }
         public long DurationMsec { get; set; }
         public int ExitCode { get; set; }
     }
 
+    /// <summary>
+    /// A version of CoreCLR that we will be benchmarking.
+    /// </summary>
     public sealed class CoreClrVersion
     {
         [JsonProperty(Required = Required.Always)]

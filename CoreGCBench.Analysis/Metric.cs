@@ -35,6 +35,11 @@ namespace CoreGCBench.Analysis
         /// <param name="data">The data to inspect when calculating this metric</param>
         /// <returns>The value of the metric</returns>
         public abstract double GetValue(BenchmarkDataSource data);
+
+        /// <summary>
+        /// Gets the name of this metric, in a human-friendly representation.
+        /// </summary>
+        public abstract string Name { get; }
     }
 
     public enum Direction

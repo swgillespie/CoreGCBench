@@ -6,3 +6,4 @@ Examples/
 packages/
 project.lock.json
 *.user
+*.zip
