@@ -6,7 +6,8 @@ namespace CoreGCBench.Common
 {
     public static class Constants
     {
-        public const string BenchmarkJsonName = "result.json";
+        public const string ResultJsonName = "result.json";
         public const string OverallResultsJsonName = "overall_results.json";
+        public const string BenchmarkJsonName = "benchmark_info.json";
     }
 }

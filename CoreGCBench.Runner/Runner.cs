@@ -176,8 +176,8 @@ namespace CoreGCBench.Runner
 
                     // write out the result json file that the analysis engine is expecting
                     File.WriteAllText(
-                        Path.Combine(Directory.GetCurrentDirectory(), Constants.BenchmarkJsonName),
-                        JsonConvert.SerializeObject(result));
+                        Path.Combine(Directory.GetCurrentDirectory(), Constants.ResultJsonName),
+                        JsonConvert.SerializeObject(result, Formatting.Indented));
                     result.Iterations.Add(iterResult);
                 }
                 finally
@@ -224,6 +224,7 @@ namespace CoreGCBench.Runner
             IterationResult result = new IterationResult();
             result.DurationMsec = timer.ElapsedMilliseconds;
             result.ExitCode = proc.ExitCode;
+            result.Pid = proc.Id;
             return result;
         }
     }

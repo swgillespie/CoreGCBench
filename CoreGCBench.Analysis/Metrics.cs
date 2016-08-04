@@ -17,7 +17,7 @@ namespace CoreGCBench.Analysis
         // TODO(segilles) - this will need to get tweaked.
         public override double VarianceThreshold => 50;
         public override string Name => "Duration";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             return data.DurationMsec;
         }
@@ -30,7 +30,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "Max Pause";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             return data.Trace.GC.Stats().MaxPauseDurationMSec;
         }
@@ -42,7 +42,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "MeanPause";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             return data.Trace.GC.Stats().MeanPauseDurationMSec;
         }
@@ -54,7 +54,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "Max Pause (Generation 0)";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             return data.Trace.GC.Generations()[0].MaxPauseDurationMSec;
         }
@@ -66,7 +66,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "Mean Pause (Generation 0)";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             return data.Trace.GC.Generations()[0].MeanPauseDurationMSec;
         }
@@ -78,7 +78,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "Max Pause (Generation 1)";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             return data.Trace.GC.Generations()[1].MaxPauseDurationMSec;
         }
@@ -90,7 +90,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "Mean Pause (Generation 1)";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             return data.Trace.GC.Generations()[1].MeanPauseDurationMSec;
         }
@@ -102,7 +102,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "Max Pause (Blocking Generation 2)";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             // TODO(segilles, perf) this is very inefficient
             return data.Trace.GC.GCs
@@ -117,7 +117,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "Mean Pause (Blocking Generation 2)";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             // TODO(segilles, perf) this is very inefficient
             return data.Trace.GC.GCs
@@ -132,7 +132,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "Max Pause (Background Generation 2)";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             // TODO(segilles, perf) this is very inefficient
             return data.Trace.GC.GCs
@@ -147,7 +147,7 @@ namespace CoreGCBench.Analysis
         public override Unit Unit => Unit.Milliseconds;
         public override double VarianceThreshold => 50;
         public override string Name => "Mean Pause (Background Generation 2)";
-        public override double GetValue(BenchmarkDataSource data)
+        public override double GetValue(IterationDataSource data)
         {
             // TODO(segilles, perf) this is very inefficient
             return data.Trace.GC.GCs

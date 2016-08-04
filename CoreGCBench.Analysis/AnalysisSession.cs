@@ -10,7 +10,7 @@ namespace CoreGCBench.Analysis
 {
     /// <summary>
     /// An analysis session is a pairing of a <see cref="MetricCollection"/>
-    /// and a <see cref="AnalysisDataSource"/>. We will combine these two sets
+    /// and a <see cref="AggregateDataSource"/>. We will combine these two sets
     /// of data by calculating all metrics and, if multiple versions of CoreCLR
     /// were benchmarked, will pit these metrics against a baseline.
     /// </summary>
@@ -25,9 +25,9 @@ namespace CoreGCBench.Analysis
         /// The data source that will be used during this analysis.
         /// Does not own the data source.
         /// </summary>
-        protected AnalysisDataSource m_dataSource;
+        protected AggregateDataSource m_dataSource;
 
-        public AnalysisSession(AnalysisDataSource data, MetricCollection metrics)
+        public AnalysisSession(AggregateDataSource data, MetricCollection metrics)
         {
             m_metrics = metrics;
             m_dataSource = data;
@@ -41,24 +41,23 @@ namespace CoreGCBench.Analysis
     /// </summary>
     public sealed class StandaloneAnalysisSession : AnalysisSession
     {
-        public StandaloneAnalysisSession(AnalysisDataSource data, MetricCollection metrics)
+        public StandaloneAnalysisSession(AggregateDataSource data, MetricCollection metrics)
             : base(data, metrics) { }
 
         public StandaloneAnalysisResult RunAnalysis()
         {
-            if (m_dataSource.Versions.Count != 1)
+            if (m_dataSource.Versions().Count() != 1)
             {
                 throw new InvalidOperationException("Can't run a standalone analysis session on a data source with more than one version");
             }
 
-            var version = m_dataSource.Versions.First();
+            var version = m_dataSource.Versions().First();
             var result = new StandaloneAnalysisResult();
             foreach (var bench in version.BenchmarkResults)
             {
                 var benchResult = new StandaloneBenchmarkAnalysisResult();
                 benchResult.Benchmark = bench.Benchmark;
                 benchResult.Metrics = CalculateMetrics(bench).ToList();
-                result.Benchmarks.Add(benchResult);
             }
 
             return result;
@@ -68,11 +67,18 @@ namespace CoreGCBench.Analysis
         {
             foreach (var metric in m_metrics.Metrics)
             {
+                List<double> values = new List<double>();
+                foreach (var iter in bench.Iterations)
+                {
+                    values.Add(metric.GetValue(iter));
+                }
+
                 yield return new MetricValue
                 {
                     Name = metric.Name,
                     Unit = metric.Unit,
-                    Value = metric.GetValue(bench)
+                    Value = values.Average(),
+                    StandardDeviation = values.StandardDeviation()
                 };
             }
         }
@@ -80,7 +86,7 @@ namespace CoreGCBench.Analysis
 
     public class ComparisonAnalysisSession : AnalysisSession
     {
-        public ComparisonAnalysisSession(AnalysisDataSource data, MetricCollection metrics)
+        public ComparisonAnalysisSession(AggregateDataSource data, MetricCollection metrics)
             : base(data, metrics) { }
 
         public ComparisonAnalysisResult RunAnalysis()

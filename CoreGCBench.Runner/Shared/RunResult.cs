@@ -41,6 +41,7 @@ namespace CoreGCBench.Common
         public string TracePathLocation { get; set; }
         public long DurationMsec { get; set; }
         public int ExitCode { get; set; }
+        public int Pid { get; set; }
     }
 
     /// <summary>

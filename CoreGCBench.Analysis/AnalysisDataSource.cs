@@ -8,9 +8,9 @@ using System.Collections.Generic;
 using System.IO.Compression;
 using System.IO;
 using Microsoft.Diagnostics.Tracing.Analysis;
-using System.Diagnostics;
-using Newtonsoft.Json;
 using Microsoft.Diagnostics.Tracing;
+using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Linq;
 
 namespace CoreGCBench.Analysis
@@ -31,6 +31,9 @@ namespace CoreGCBench.Analysis
         /// </summary>
         private string m_rootDir;
 
+        /// <summary>
+        /// The versions contained within this data source.
+        /// </summary>
         public IList<VersionAnalysisDataSource> Versions { get; set; } = new List<VersionAnalysisDataSource>();
 
         public AnalysisDataSource(string zipFile)
@@ -130,7 +133,49 @@ namespace CoreGCBench.Analysis
         }
     }
 
+    /// <summary>
+    /// A data source for individual benchmarks, containing
+    /// one or more iterations (<see cref="IterationDataSource"/>) 
+    /// </summary>
     public sealed class BenchmarkDataSource : IDisposable
+    {
+        /// <summary>
+        /// The benchmark that was executed.
+        /// </summary>
+        public Benchmark Benchmark { get; set; }
+
+        /// <summary>
+        /// The iterations that occured within this benchmark.
+        /// </summary>
+        public IList<IterationDataSource> Iterations { get; set; }
+
+
+        public BenchmarkDataSource(string benchmarkFolder)
+        {
+            // there should be numerically indexed folders in this directory.
+            foreach (var iterFolder in Directory.EnumerateDirectories(benchmarkFolder))
+            {
+                Iterations.Add(new IterationDataSource(iterFolder));
+            }
+
+            Benchmark = JsonConvert.DeserializeObject<Benchmark>(Path.Combine(benchmarkFolder, Constants.BenchmarkJsonName));
+        }
+
+        public void Dispose()
+        {
+            foreach (var iteration in Iterations)
+            {
+                iteration.Dispose();
+            }
+
+            Iterations = null;
+        }
+    }
+
+    /// <summary>
+    /// A data source for individual iterations.
+    /// </summary>
+    public sealed class IterationDataSource : IDisposable
     {
         /// <summary>
         /// The TraceEventSource we constructed to parse the trace.
@@ -144,11 +189,6 @@ namespace CoreGCBench.Analysis
         /// trace, or null if a trace was not gathered.
         /// </summary>
         public TraceLoadedDotNetRuntime Trace { get; set; }
-
-        /// <summary>
-        /// The benchmark that was executed.
-        /// </summary>
-        public Benchmark Benchmark { get; set; }
 
         /// <summary>
         /// The path to the trace that was used to construct the TraceGC
@@ -166,42 +206,40 @@ namespace CoreGCBench.Analysis
         /// </summary>
         public int ExitCode { get; set; }
 
-        public BenchmarkDataSource(string benchmarkFolder)
+        /// <summary>
+        /// The PID of the benchmark process.
+        /// </summary>
+        public int Pid { get; set; }
+
+        public IterationDataSource(string iterFolder)
         {
-            // there should be a results.json file in this directory,
-            // dumped by the runner.
-
-            // TODO(segilles) need to be wary of invalid input over the next
-            // three lines
-
-            /*
-            string resultFile = Path.Combine(benchmarkFolder, Constants.BenchmarkJsonName);
+            string resultFile = Path.Combine(iterFolder, Constants.ResultJsonName);
             Debug.Assert(File.Exists(resultFile));
-            BenchmarkResult bench = JsonConvert.DeserializeObject<BenchmarkResult>(File.ReadAllText(resultFile));
+            IterationResult iter = JsonConvert.DeserializeObject<IterationResult>(File.ReadAllText(resultFile));
 
-            Debug.Assert(File.Exists(bench.TracePathLocation));
+            Debug.Assert(File.Exists(iter.TracePathLocation));
 
             // TODO(segilles, xplat) LTTNG.
             // We deliberately don't dispose this event source here since we
             // are moving ownership to the object being constructed.
-            var source = new ETWTraceEventSource(bench.TracePathLocation);
+            var source = new ETWTraceEventSource(iter.TracePathLocation);
+            m_source = source;
             source.NeedLoadedDotNetRuntimes();
             source.Process();
-            // TODO(segilles) find the right process.
+
             Trace = source.Processes()
-                .First()
+                // TODO(segilles) this isn't quite right, it's possible (but HIGHLY unlikely)
+                // that we could collide pids.
+                .First(t => t.ProcessID == iter.Pid)
                 .LoadedDotNetRuntime();
-            Benchmark = bench.Benchmark;
-            TraceLocation = bench.TracePathLocation;
-            DurationMsec = bench.DurationMsec;
-            ExitCode = bench.ExitCode;
-            */
+            TraceLocation = iter.TracePathLocation;
+            DurationMsec = iter.DurationMsec;
+            ExitCode = iter.ExitCode;
         }
 
         public void Dispose()
         {
             m_source?.Dispose();
-            m_source = null;
         }
     }
 }

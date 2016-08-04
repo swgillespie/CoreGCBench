@@ -20,6 +20,7 @@
     <DefineConstants>TRACE;DEBUG;DESKTOP_BUILD</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -43,9 +44,11 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AggregateDataSource.cs" />
     <Compile Include="AnalysisDataSource.cs" />
     <Compile Include="AnalysisResult.cs" />
     <Compile Include="AnalysisSession.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Metric.cs" />
     <Compile Include="MetricCollection.cs" />
     <Compile Include="Metrics.cs" />

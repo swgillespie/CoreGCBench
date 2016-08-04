@@ -24,6 +24,7 @@ namespace CoreGCBench.Analysis
         public string Name;
         public Unit Unit;
         public double Value;
+        public double StandardDeviation;
     }
 
     public sealed class ComparisonAnalysisResult
