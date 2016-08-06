@@ -123,11 +123,12 @@ namespace CoreGCBench.Analysis.Runner
 
         private static void DoComparisonAnalysis(Options opts, AggregateDataSource data)
         {
-            Logger.Log("Beginning singular analysis");
-            Debug.Assert(data.Versions().Count() == 1);
+            Logger.Log("Beginning comparison analysis");
+            Debug.Assert(data.Versions().Count() != 1);
             var session = new ComparisonAnalysisSession(data, MetricCollection.Default, opts.BaselineVersion);
             ComparisonAnalysisResult results = session.RunAnalysis();
             string json = JsonConvert.SerializeObject(results, Formatting.Indented);
+            Logger.Log($"Analysis complete, writing to file: {opts.OutputFile}");
             File.WriteAllText(opts.OutputFile, json);
         }
     }

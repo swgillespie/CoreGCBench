@@ -12,6 +12,7 @@ using Microsoft.Diagnostics.Tracing;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CoreGCBench.Analysis
 {
@@ -38,21 +39,26 @@ namespace CoreGCBench.Analysis
 
         public AnalysisDataSource(string zipFile)
         {
-            Logger.LogVerbose($"Beginning data source construction for zip file {zipFile}");
+            Logger.Log($"Beginning data source construction for zip file {zipFile}");
             var tempPath = Path.Combine(Path.GetTempPath(), TempFolderName, Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempPath);
             m_rootDir = tempPath;
 
-            Logger.LogVerbose("Extracting zip file");
+            Logger.Log("Extracting zip file");
             ZipFile.ExtractToDirectory(zipFile, tempPath);
 
             // see the comment in CoreGCBench.Runner.Driver::PackageResults(RunResult, Options)
             // for a precise description of what the zip file looks like.
             Logger.LogVerbose("Enumerating versions");
-            foreach (var versionFolder in Directory.EnumerateDirectories(tempPath))
+
+            Parallel.ForEach(Directory.EnumerateDirectories(tempPath), versionFolder =>
             {
-                Versions.Add(new VersionAnalysisDataSource(m_rootDir, versionFolder));
-            }
+                var ds = new VersionAnalysisDataSource(m_rootDir, versionFolder);
+                lock (Versions)
+                {
+                    Versions.Add(ds);
+                }
+            });
         }
 
         #region IDisposable Implementation
@@ -126,11 +132,16 @@ namespace CoreGCBench.Analysis
 
         public VersionAnalysisDataSource(string rootDir, string versionFolder)
         {
-            Logger.LogVerbose($"Processing individual version {versionFolder}");
-            foreach (var benchmarkFolder in Directory.EnumerateDirectories(versionFolder))
+            Logger.Log($"Processing individual version {versionFolder}");
+
+            Parallel.ForEach(Directory.EnumerateDirectories(versionFolder), benchmarkFolder =>
             {
-                BenchmarkResults.Add(new BenchmarkDataSource(rootDir, benchmarkFolder));
-            }
+                var ds = new BenchmarkDataSource(rootDir, benchmarkFolder);
+                lock (BenchmarkResults)
+                {
+                    BenchmarkResults.Add(ds);
+                }
+            });
 
             Version = JsonConvert.DeserializeObject<CoreClrVersion>(
                 File.ReadAllText(Path.Combine(versionFolder,Constants.VersionJsonName)));
@@ -169,12 +180,17 @@ namespace CoreGCBench.Analysis
 
         public BenchmarkDataSource(string rootDir, string benchmarkFolder)
         {
-            Logger.LogVerbose($"Processing individual benchmark {benchmarkFolder}");
+            Logger.Log($"Processing individual benchmark {benchmarkFolder}");
             // there should be numerically indexed folders in this directory.
-            foreach (var iterFolder in Directory.EnumerateDirectories(benchmarkFolder))
+
+            Parallel.ForEach(Directory.EnumerateDirectories(benchmarkFolder), iterFolder =>
             {
-                Iterations.Add(new IterationDataSource(rootDir, iterFolder));
-            }
+                var ds = new IterationDataSource(rootDir, iterFolder);
+                lock (Iterations)
+                {
+                    Iterations.Add(ds);
+                }
+            });
 
             string benchmarkJsonFile = Path.Combine(benchmarkFolder, Constants.BenchmarkJsonName);
             Debug.Assert(File.Exists(benchmarkJsonFile));

@@ -13,6 +13,7 @@ namespace CoreGCBench.Analysis
     public static class Logger
     {
         private static bool m_verbose;
+        private static object m_lock = new object();
 
         /// <summary>
         /// Initializes this logger.
@@ -32,8 +33,11 @@ namespace CoreGCBench.Analysis
         /// <param name="fmt">A format string to print</param>
         public static void Log(string fmt)
         {
-            var timestamp = DateTime.Now.ToString("[MM-dd-yyyy HH:mm:ss] ");
-            Console.WriteLine(timestamp + fmt);
+            lock (m_lock)
+            {
+                var timestamp = DateTime.Now.ToString("[MM-dd-yyyy HH:mm:ss] ");
+                Console.WriteLine(timestamp + fmt);
+            }
         }
 
         /// <summary>

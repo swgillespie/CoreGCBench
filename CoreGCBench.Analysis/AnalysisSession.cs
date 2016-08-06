@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using CoreGCBench.Common;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -134,10 +133,12 @@ namespace CoreGCBench.Analysis
         {
             Debug.Assert(baseline.BenchmarkResults.Count == candidate.BenchmarkResults.Count);
             var result = new VersionComparisonAnalysisResult();
+
             foreach (var bench in baseline.BenchmarkResults.Zip(candidate.BenchmarkResults, Tuple.Create)) {
                 result.Benchmarks.Add(DoSingleBenchmarkComparison(bench.Item1, bench.Item2));
             }
 
+            result.Version = candidate.Version;
             return result;
         }
 
@@ -159,6 +160,7 @@ namespace CoreGCBench.Analysis
                 result.Metrics.Add(comp);
             }
 
+            result.Benchmark = baseline.Benchmark;
             return result;
         }
 

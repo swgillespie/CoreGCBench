@@ -68,6 +68,7 @@ namespace CoreGCBench.Analysis
 
     public sealed class VersionComparisonAnalysisResult
     {
+        public CoreClrVersion Version { get; set; }
         public IList<BenchmarkComparisonAnalysisResult> Benchmarks { get; set; } = new List<BenchmarkComparisonAnalysisResult>();
     }
 
@@ -80,9 +81,11 @@ namespace CoreGCBench.Analysis
     public sealed class MetricComparison
     {
         public string Metric;
+        [JsonConverter(typeof(StringEnumConverter))]
         public Unit Unit;
         public MetricValue Baseline { get; set; }
         public MetricValue Candidate { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public ComparisonDecision Decision { get; set; }
     }
 
