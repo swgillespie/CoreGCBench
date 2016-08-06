@@ -100,6 +100,11 @@ namespace CoreGCBench.Runner
                     result.BenchmarkResults.Add(benchResult);
                 }
 
+                // write out the version description
+                File.WriteAllText(
+                    Path.Combine(folderName, Constants.VersionJsonName),
+                    JsonConvert.SerializeObject(version));
+
                 return result;
             }
             finally
@@ -172,12 +177,15 @@ namespace CoreGCBench.Runner
                     }
 
                     var currentRelativePath = Path.Combine(m_relativePath.Reverse().ToArray());
-                    iterResult.TracePathLocation = Path.Combine(currentRelativePath, traceName);
+
+                    // TODO(segilles, xplat) adding .zip on the end is done by PerfView, perfcollect
+                    // probably doesn't do this.
+                    iterResult.TracePathLocation = Path.Combine(currentRelativePath, traceName + ".zip");
 
                     // write out the result json file that the analysis engine is expecting
                     File.WriteAllText(
                         Path.Combine(Directory.GetCurrentDirectory(), Constants.ResultJsonName),
-                        JsonConvert.SerializeObject(result, Formatting.Indented));
+                        JsonConvert.SerializeObject(iterResult, Formatting.Indented));
                     result.Iterations.Add(iterResult);
                 }
                 finally
@@ -187,6 +195,11 @@ namespace CoreGCBench.Runner
                     m_relativePath.Pop();
                 }
             }
+
+            // write out the benchmark json
+            File.WriteAllText(
+                Path.Combine(Directory.GetCurrentDirectory(), Constants.BenchmarkJsonName), 
+                JsonConvert.SerializeObject(bench, Formatting.Indented));
 
             return result;
         }

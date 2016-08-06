@@ -20,6 +20,16 @@ namespace CoreGCBench.Analysis
             {
                 var collection = new MetricCollection();
                 collection.AddMetric(new DurationMetric());
+                collection.AddMetric(new MaximumPauseMetric());
+                collection.AddMetric(new MeanPauseMetric());
+                collection.AddMetric(new MaximumPauseGenZeroMetric());
+                collection.AddMetric(new MeanPauseGenZeroMetric());
+                collection.AddMetric(new MaximumPauseGenOneMetric());
+                collection.AddMetric(new MeanPauseGenOneMetric());
+                collection.AddMetric(new MaximumPauseBlockingGenTwoMetric());
+                collection.AddMetric(new MeanPauseBlockingGenTwoMetric());
+                collection.AddMetric(new MaximumPauseBackgroundGenTwoMetric());
+                collection.AddMetric(new MeanPauseBackgroundGenTwoMetric());
                 return collection;
             }
         }

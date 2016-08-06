@@ -4,7 +4,7 @@
 
 using System;
 
-namespace CoreGCBench.Analysis.Runner
+namespace CoreGCBench.Analysis
 {
     /// <summary>
     /// A utility class used to log information as various stages of
@@ -12,15 +12,15 @@ namespace CoreGCBench.Analysis.Runner
     /// </summary>
     public static class Logger
     {
-        private static Options m_options;
+        private static bool m_verbose;
 
         /// <summary>
         /// Initializes this logger.
         /// </summary>
         /// <param name="opts">The command-line options.</param>
-        public static void Initialize(Options options)
+        public static void Initialize(bool shouldLogVerbose)
         {
-            m_options = options;
+            m_verbose = shouldLogVerbose;
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace CoreGCBench.Analysis.Runner
         /// <param name="fmt">A format string to print</param>
         public static void LogVerbose(string fmt)
         {
-            if (m_options.Verbose)
+            if (m_verbose)
             {
                 Log(fmt);
             }

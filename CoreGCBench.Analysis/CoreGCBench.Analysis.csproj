@@ -49,6 +49,7 @@
     <Compile Include="AnalysisResult.cs" />
     <Compile Include="AnalysisSession.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="Metric.cs" />
     <Compile Include="MetricCollection.cs" />
     <Compile Include="Metrics.cs" />

@@ -55,6 +55,8 @@ Options:
             }
 
             Options opts = ParseArguments(args);
+            Logger.Initialize(opts.Verbose);
+            Driver.Execute(opts);
         }
 
         /// <summary>
@@ -116,6 +118,11 @@ Options:
             if (opts.ZipFiles.Count == 0)
             {
                 ArgumentParseError("must provide at least one zip file to analyze");
+            }
+
+            if (opts.OutputFile == null)
+            {
+                ArgumentParseError("must provide an output file");
             }
 
             return opts;

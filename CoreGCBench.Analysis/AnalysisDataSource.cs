@@ -38,17 +38,20 @@ namespace CoreGCBench.Analysis
 
         public AnalysisDataSource(string zipFile)
         {
+            Logger.LogVerbose($"Beginning data source construction for zip file {zipFile}");
             var tempPath = Path.Combine(Path.GetTempPath(), TempFolderName, Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempPath);
             m_rootDir = tempPath;
 
+            Logger.LogVerbose("Extracting zip file");
             ZipFile.ExtractToDirectory(zipFile, tempPath);
 
             // see the comment in CoreGCBench.Runner.Driver::PackageResults(RunResult, Options)
             // for a precise description of what the zip file looks like.
+            Logger.LogVerbose("Enumerating versions");
             foreach (var versionFolder in Directory.EnumerateDirectories(tempPath))
             {
-                Versions.Add(new VersionAnalysisDataSource(versionFolder));
+                Versions.Add(new VersionAnalysisDataSource(m_rootDir, versionFolder));
             }
         }
 
@@ -59,11 +62,8 @@ namespace CoreGCBench.Analysis
         {
             if (!disposedValue)
             {
-                if (m_rootDir != null)
-                {
-                    Directory.Delete(m_rootDir);
-                }
-
+                // dispose the TraceEventSource first, since it has a file
+                // lock in the directory we are about to delete
                 if (disposing)
                 {
                     if (Versions != null)
@@ -75,6 +75,19 @@ namespace CoreGCBench.Analysis
                     }
 
                     Versions = null;
+                }
+
+                if (m_rootDir != null)
+                {
+                    try
+                    {
+                        Directory.Delete(m_rootDir, true);
+                    }
+                    catch (Exception exn)
+                    {
+                        // best effort. we tried. it's in the temp directory anyway.
+                        Logger.LogWarning($"Failed to delete temporary directory: {exn.Message}");
+                    }
                 }
 
                 disposedValue = true;
@@ -109,14 +122,18 @@ namespace CoreGCBench.Analysis
         /// The data gathered from analyzing the benchmarks that were run
         /// on this version of CoreCLR.
         /// </summary>
-        public IList<BenchmarkDataSource> BenchmarkResults { get; set; }
+        public IList<BenchmarkDataSource> BenchmarkResults { get; set; } = new List<BenchmarkDataSource>();
 
-        public VersionAnalysisDataSource(string versionFolder)
+        public VersionAnalysisDataSource(string rootDir, string versionFolder)
         {
+            Logger.LogVerbose($"Processing individual version {versionFolder}");
             foreach (var benchmarkFolder in Directory.EnumerateDirectories(versionFolder))
             {
-                BenchmarkResults.Add(new BenchmarkDataSource(benchmarkFolder));
+                BenchmarkResults.Add(new BenchmarkDataSource(rootDir, benchmarkFolder));
             }
+
+            Version = JsonConvert.DeserializeObject<CoreClrVersion>(
+                File.ReadAllText(Path.Combine(versionFolder,Constants.VersionJsonName)));
         }
 
         public void Dispose()
@@ -147,18 +164,21 @@ namespace CoreGCBench.Analysis
         /// <summary>
         /// The iterations that occured within this benchmark.
         /// </summary>
-        public IList<IterationDataSource> Iterations { get; set; }
+        public IList<IterationDataSource> Iterations { get; set; } = new List<IterationDataSource>();
 
 
-        public BenchmarkDataSource(string benchmarkFolder)
+        public BenchmarkDataSource(string rootDir, string benchmarkFolder)
         {
+            Logger.LogVerbose($"Processing individual benchmark {benchmarkFolder}");
             // there should be numerically indexed folders in this directory.
             foreach (var iterFolder in Directory.EnumerateDirectories(benchmarkFolder))
             {
-                Iterations.Add(new IterationDataSource(iterFolder));
+                Iterations.Add(new IterationDataSource(rootDir, iterFolder));
             }
 
-            Benchmark = JsonConvert.DeserializeObject<Benchmark>(Path.Combine(benchmarkFolder, Constants.BenchmarkJsonName));
+            string benchmarkJsonFile = Path.Combine(benchmarkFolder, Constants.BenchmarkJsonName);
+            Debug.Assert(File.Exists(benchmarkJsonFile));
+            Benchmark = JsonConvert.DeserializeObject<Benchmark>(File.ReadAllText(benchmarkJsonFile));
         }
 
         public void Dispose()
@@ -211,20 +231,30 @@ namespace CoreGCBench.Analysis
         /// </summary>
         public int Pid { get; set; }
 
-        public IterationDataSource(string iterFolder)
+        public IterationDataSource(string rootDir, string iterFolder)
         {
             string resultFile = Path.Combine(iterFolder, Constants.ResultJsonName);
             Debug.Assert(File.Exists(resultFile));
             IterationResult iter = JsonConvert.DeserializeObject<IterationResult>(File.ReadAllText(resultFile));
 
-            Debug.Assert(File.Exists(iter.TracePathLocation));
+            string traceFile = Path.Combine(rootDir, iter.TracePathLocation);
+            Debug.Assert(File.Exists(traceFile));
 
-            // TODO(segilles, xplat) LTTNG.
-            // We deliberately don't dispose this event source here since we
-            // are moving ownership to the object being constructed.
-            var source = new ETWTraceEventSource(iter.TracePathLocation);
+            // we have to unzip the trace that PerfView collected. Normally
+            // PerfView does it, but since we're not using PerfView to read
+            // the data we collected we're stuck doing it ourselves.
+            string unzippedEtlPath = Path.Combine(iterFolder, Constants.UnzippedTraceName);
+            Logger.LogVerbose($"Unzipping trace {traceFile}");
+            ZipFile.ExtractToDirectory(traceFile, unzippedEtlPath);
+
+            // traceFile has a .etl.zip extensions, and we're looking for a file with a .etl
+            // extension in the unzipped ETL path.
+            string strippedFilename = Path.GetFileNameWithoutExtension(traceFile);
+            Logger.LogVerbose("Parsing ETW events");
+            var source = new ETWTraceEventSource(Path.Combine(unzippedEtlPath, strippedFilename));
             m_source = source;
             source.NeedLoadedDotNetRuntimes();
+            Logger.LogVerbose("Calculating GC stats");
             source.Process();
 
             Trace = source.Processes()

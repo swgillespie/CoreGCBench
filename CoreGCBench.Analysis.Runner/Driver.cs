@@ -117,6 +117,7 @@ namespace CoreGCBench.Analysis.Runner
             var session = new StandaloneAnalysisSession(data, MetricCollection.Default);
             StandaloneAnalysisResult results = session.RunAnalysis();
             string json = JsonConvert.SerializeObject(results, Formatting.Indented);
+            Logger.Log($"Analysis complete, writing to file: {opts.OutputFile}");
             File.WriteAllText(opts.OutputFile, json);
         }
 
@@ -124,7 +125,7 @@ namespace CoreGCBench.Analysis.Runner
         {
             Logger.Log("Beginning singular analysis");
             Debug.Assert(data.Versions().Count() == 1);
-            var session = new ComparisonAnalysisSession(data, MetricCollection.Default);
+            var session = new ComparisonAnalysisSession(data, MetricCollection.Default, opts.BaselineVersion);
             ComparisonAnalysisResult results = session.RunAnalysis();
             string json = JsonConvert.SerializeObject(results, Formatting.Indented);
             File.WriteAllText(opts.OutputFile, json);
