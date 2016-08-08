@@ -11,7 +11,16 @@ namespace CoreGCBench.Analysis
     /// </summary>
     public static partial class TTest
     {
-        public const double StandardPValue = 0.3;
+        /// <summary>
+        /// This p-value is a standard p-value for t-tests. It's
+        /// proven to be good enough to catch regressions in my tests, but
+        /// it may need tweaking.
+        /// </summary>
+        public const double StandardPValue = 0.05;
+
+        /// <summary>
+        /// These are the p-values whose values are recorded in the t-test table.
+        /// </summary>
         public static double[] AllowedPValues = { 0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001 };
 
         /// <summary>
