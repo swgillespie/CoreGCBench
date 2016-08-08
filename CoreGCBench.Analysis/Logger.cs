@@ -3,9 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Runtime.InteropServices;
 
-namespace CoreGCBench.Runner
+namespace CoreGCBench.Analysis
 {
     /// <summary>
     /// A utility class used to log information as various stages of
@@ -13,15 +12,16 @@ namespace CoreGCBench.Runner
     /// </summary>
     public static class Logger
     {
-        private static Options m_options;
+        private static bool m_verbose;
+        private static object m_lock = new object();
 
         /// <summary>
         /// Initializes this logger.
         /// </summary>
         /// <param name="opts">The command-line options.</param>
-        public static void Initialize(Options options)
+        public static void Initialize(bool shouldLogVerbose)
         {
-            m_options = options;
+            m_verbose = shouldLogVerbose;
         }
 
         /// <summary>
@@ -31,23 +31,13 @@ namespace CoreGCBench.Runner
         /// </summary>
         /// <param name="v">The verbosity of this message</param>
         /// <param name="fmt">A format string to print</param>
-        public static void Log(Verbosity v, string fmt)
+        public static void Log(string fmt)
         {
-            if (v <= m_options.Verbosity)
+            lock (m_lock)
             {
                 var timestamp = DateTime.Now.ToString("[MM-dd-yyyy HH:mm:ss] ");
-                m_options.LogStream.WriteLine(timestamp + fmt);
+                Console.WriteLine(timestamp + fmt);
             }
-        }
-
-        /// <summary>
-        /// Logs a message at the highest priority, so it is always displayed
-        /// to the user.
-        /// </summary>
-        /// <param name="fmt">A format string to print</param>
-        public static void LogAlways(string fmt)
-        {
-            Log(Verbosity.None, fmt);
         }
 
         /// <summary>
@@ -57,17 +47,10 @@ namespace CoreGCBench.Runner
         /// <param name="fmt">A format string to print</param>
         public static void LogVerbose(string fmt)
         {
-            Log(Verbosity.Verbose, fmt);
-        }
-
-        /// <summary>
-        /// Logs a message at the most verbose level, so it is only printed
-        /// if the -d option is given.
-        /// </summary>
-        /// <param name="fmt">A format string to print</param>
-        public static void LogDiagnostic(string fmt)
-        {
-            Log(Verbosity.Diagnostic, fmt);
+            if (m_verbose)
+            {
+                Log(fmt);
+            }
         }
 
         /// <summary>
@@ -79,7 +62,7 @@ namespace CoreGCBench.Runner
         {
             var old = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Yellow;
-            LogAlways(fmt);
+            Log(fmt);
             Console.ForegroundColor = old;
         }
 
@@ -92,32 +75,8 @@ namespace CoreGCBench.Runner
         {
             var old = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;
-            LogAlways(fmt);
+            Log(fmt);
             Console.ForegroundColor = old;
-        }
-    }
-
-    /// <summary>
-    /// A collection of utilities.
-    /// </summary>
-    public static class Utils
-    {
-        /// <summary>
-        /// Returns the name of the CoreRun executable on the current platform.
-        /// </summary>
-        public static string CoreRunName
-        {
-            get
-            {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    return "CoreRun.exe";
-                }
-                else
-                {
-                    return "corerun";
-                }
-            }
         }
     }
 }

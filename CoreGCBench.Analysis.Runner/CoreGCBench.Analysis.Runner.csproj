@@ -4,25 +4,28 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{1803E37B-5A71-4965-A97B-DCD84953CFDA}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{14C4B978-A9BE-4BE9-82DB-B0217A7B7A44}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CoreGCBench.Analysis</RootNamespace>
-    <AssemblyName>CoreGCBench.Analysis</AssemblyName>
+    <RootNamespace>CoreGCBench.Analysis.Runner</RootNamespace>
+    <AssemblyName>CoreGCBench.Analysis.Runner</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DESKTOP_BUILD</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -31,40 +34,34 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Diagnostics.Tracing.TraceEvent">
-      <HintPath>Dependencies\Microsoft.Diagnostics.Tracing.TraceEvent.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AggregateDataSource.cs" />
-    <Compile Include="AnalysisDataSource.cs" />
-    <Compile Include="AnalysisResult.cs" />
-    <Compile Include="AnalysisSession.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="Logger.cs" />
-    <Compile Include="Metric.cs" />
-    <Compile Include="MetricCollection.cs" />
-    <Compile Include="Metrics.cs" />
-    <Compile Include="..\CoreGCBench.Runner\Shared\RunResult.cs" />
-    <Compile Include="..\CoreGCBench.Runner\Shared\Benchmark.cs" />
-    <Compile Include="..\CoreGCBench.Runner\Shared\Constants.cs" />
-    <Compile Include="TTest.cs" />
-    <Compile Include="TTest.Table.cs" />
+    <Compile Include="Driver.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Dependencies\" />
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
+    <None Include="App.config" />
+    <Compile Include="Options.cs" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CoreGCBench.Analysis\CoreGCBench.Analysis.csproj">
+      <Project>{1803e37b-5a71-4965-a97b-dcd84953cfda}</Project>
+      <Name>CoreGCBench.Analysis</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

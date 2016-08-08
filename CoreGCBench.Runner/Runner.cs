@@ -3,8 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using CoreGCBench.Common;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace CoreGCBench.Runner
 {
@@ -30,6 +33,12 @@ namespace CoreGCBench.Runner
         private ITraceCollector m_traceCollector;
 
         /// <summary>
+        /// Keeps track of where we are in the directory tree, relative to the
+        /// root directory.
+        /// </summary>
+        private Stack<string> m_relativePath = new Stack<string>();
+
+        /// <summary>
         /// Constructs a new runner that will run the given suite
         /// with the given options.
         /// </summary>
@@ -53,7 +62,6 @@ namespace CoreGCBench.Runner
             RunResult result = new RunResult();
             foreach (var version in m_run.CoreClrVersions)
             {
-                Logger.LogAlways($"Beginning run of version \"{version.Name}\"");
                 // these should have been validated already before runnning
                 Debug.Assert(!string.IsNullOrEmpty(version.Path));
                 Debug.Assert(!string.IsNullOrEmpty(version.Name));
@@ -74,6 +82,7 @@ namespace CoreGCBench.Runner
         /// <returns>The results of this run</returns>
         private CoreclrVersionRunResult RunVersion(CoreClrVersion version)
         {
+            Logger.LogAlways($"Beginning run of version \"{version.Name}\"");
             CoreclrVersionRunResult result = new CoreclrVersionRunResult();
             Debug.Assert(Directory.GetCurrentDirectory() == m_options.OutputDirectory);
             // TODO(segilles) error handling here. We should avoid propegating exceptions
@@ -81,6 +90,7 @@ namespace CoreGCBench.Runner
             string folderName = Path.Combine(Directory.GetCurrentDirectory(), version.Name);
             Directory.CreateDirectory(folderName);
             Directory.SetCurrentDirectory(folderName);
+            m_relativePath.Push(version.Name);
             try
             {
                 foreach (var benchmark in m_run.Suite)
@@ -90,12 +100,18 @@ namespace CoreGCBench.Runner
                     result.BenchmarkResults.Add(benchResult);
                 }
 
+                // write out the version description
+                File.WriteAllText(
+                    Path.Combine(folderName, Constants.VersionJsonName),
+                    JsonConvert.SerializeObject(version));
+
                 return result;
             }
             finally
             {
                 string upOneDir = Path.Combine(Directory.GetCurrentDirectory(), "..");
                 Directory.SetCurrentDirectory(upOneDir);
+                m_relativePath.Pop();
             }
         }
 
@@ -111,27 +127,81 @@ namespace CoreGCBench.Runner
             string folderName = Path.Combine(Directory.GetCurrentDirectory(), bench.Name);
             Directory.CreateDirectory(folderName);
             Directory.SetCurrentDirectory(folderName);
+            m_relativePath.Push(bench.Name);
             try
             {
-                string traceName = bench.Name + ".etl";
-                m_traceCollector.StartTrace(bench.Name + ".etl", m_run.CollectionLevel);
-                try
-                {
-                    // we've got everything set up, time to run.
-                    BenchmarkResult result = RunBenchmarkImpl(version, bench);
-                    result.TracePathLocation = Path.Combine(Directory.GetCurrentDirectory(), traceName);
-                    return result;
-                }
-                finally
-                {
-                    m_traceCollector.StopTrace();
-                }
+                return RunBenchmarkImplWithIterations(version, bench);
             }
             finally
             {
                 string upOneDir = Path.Combine(Directory.GetCurrentDirectory(), "..");
                 Directory.SetCurrentDirectory(upOneDir);
+                m_relativePath.Pop();
             }
+        }
+
+        /// <summary>
+        /// Runs a single iteration of a benchmark. If no iteration number if specified,
+        /// the benchmark is run once.
+        /// </summary>
+        /// <param name="version">The version of CoreCLR to run the benchmark on</param>
+        /// <param name="bench">The benchmark to run</param>
+        /// <returns>The result of running the benchmark</returns>
+        private BenchmarkResult RunBenchmarkImplWithIterations(CoreClrVersion version, Benchmark bench)
+        {
+            Logger.LogAlways($"Running iterations for benchmark {bench.Name}");
+            BenchmarkResult result = new BenchmarkResult();
+            result.Benchmark = bench;
+            int iterations = bench.Iterations ?? 1;
+            for (int i = 0; i < iterations; i++)
+            {
+                Logger.LogAlways($"Beginning iteration {i} for benchmark {bench.Name}");
+                // we'll create subdirectories for every iteration.
+                string folderName = Path.Combine(Directory.GetCurrentDirectory(), i.ToString());
+                Directory.CreateDirectory(folderName);
+                Directory.SetCurrentDirectory(folderName);
+                m_relativePath.Push(i.ToString());
+                try
+                {
+                    IterationResult iterResult;
+                    string traceName = bench.Name + ".etl";
+                    m_traceCollector.StartTrace(bench.Name + ".etl", m_run.CollectionLevel);
+                    try
+                    {
+                        // we've got everything set up, time to run.
+                        iterResult = RunBenchmarkImpl(version, bench);
+                    }
+                    finally
+                    {
+                        m_traceCollector.StopTrace();
+                    }
+
+                    var currentRelativePath = Path.Combine(m_relativePath.Reverse().ToArray());
+
+                    // TODO(segilles, xplat) adding .zip on the end is done by PerfView, perfcollect
+                    // probably doesn't do this.
+                    iterResult.TracePathLocation = Path.Combine(currentRelativePath, traceName + ".zip");
+
+                    // write out the result json file that the analysis engine is expecting
+                    File.WriteAllText(
+                        Path.Combine(Directory.GetCurrentDirectory(), Constants.ResultJsonName),
+                        JsonConvert.SerializeObject(iterResult, Formatting.Indented));
+                    result.Iterations.Add(iterResult);
+                }
+                finally
+                {
+                    string upOneDir = Path.Combine(Directory.GetCurrentDirectory(), "..");
+                    Directory.SetCurrentDirectory(upOneDir);
+                    m_relativePath.Pop();
+                }
+            }
+
+            // write out the benchmark json
+            File.WriteAllText(
+                Path.Combine(Directory.GetCurrentDirectory(), Constants.BenchmarkJsonName), 
+                JsonConvert.SerializeObject(bench, Formatting.Indented));
+
+            return result;
         }
 
         /// <summary>
@@ -141,7 +211,7 @@ namespace CoreGCBench.Runner
         /// <param name="version">The coreclr version to test</param>
         /// <param name="bench">The benchmark to run</param>
         /// <returns></returns>
-        private BenchmarkResult RunBenchmarkImpl(CoreClrVersion version, Benchmark bench)
+        private IterationResult RunBenchmarkImpl(CoreClrVersion version, Benchmark bench)
         {
             // TODO(segilles) we'd like to have precise control over when the benchmark
             // terminates. After some number of GCs, after some mechanisms get exercised,
@@ -164,9 +234,10 @@ namespace CoreGCBench.Runner
             proc.WaitForExit();
             timer.Stop();
 
-            BenchmarkResult result = new BenchmarkResult();
+            IterationResult result = new IterationResult();
             result.DurationMsec = timer.ElapsedMilliseconds;
             result.ExitCode = proc.ExitCode;
+            result.Pid = proc.Id;
             return result;
         }
     }

@@ -35,6 +35,18 @@ namespace CoreGCBench.Runner
         /// influence its behavior.
         /// </summary>
         public string ConfigFile { get; set; }
+
+        /// <summary>
+        /// Whether or not this is a "dry run", or a run started for the purpose
+        /// of testing the validation code. Defaults to false.
+        /// </summary>
+        public bool DryRun { get; set; } = false;
+
+        /// <summary>
+        /// If present, the driver will load the configuration from this variable
+        /// (expected to be json) instead of loading the config file from disk.
+        /// </summary>
+        public string ConfigJson { get; set; }
     }
 
     public enum Verbosity

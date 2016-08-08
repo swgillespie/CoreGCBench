@@ -26,7 +26,7 @@ namespace CoreGCBench.Runner
 
             BenchmarkRun run;
 
-            if (!LoadConfigFile(options.ConfigFile, out run))
+            if (!LoadConfigFile(options, out run))
             {
                 // contract - all of these validation messages
                 // log an error message before returning.
@@ -38,7 +38,14 @@ namespace CoreGCBench.Runner
             {
                 return;
             }
-            
+
+            if (options.DryRun)
+            {
+                // if this is a dry run, we're done here.
+                return;
+            }
+
+            // otherwise, we're going to begin execution.
             // create the output directory, if it doesn't exist yet.
             if (!Directory.Exists(options.OutputDirectory))
             {
@@ -51,18 +58,27 @@ namespace CoreGCBench.Runner
             RunResult result = runner.Run();
             PackageResults(result, options);
         }
-        private static bool LoadConfigFile(string configFile, out BenchmarkRun run)
+
+        private static bool LoadConfigFile(Options opts, out BenchmarkRun run)
         {
             try
             {
-                string fileText = File.ReadAllText(configFile);
+                string fileText;
+                if (opts.ConfigJson != null)
+                {
+                    fileText = opts.ConfigJson;
+                }
+                else
+                {
+                    fileText = File.ReadAllText(opts.ConfigFile);
+                }
                 run = JsonConvert.DeserializeObject<BenchmarkRun>(fileText);
                 return true;
             }
             catch (Exception exn)
             {
                 // TODO(segilles) we can probably produce a better error message here.
-                Logger.LogAlways($"Failed to load configuration file: {exn.ToString()}");
+                Logger.LogError($"Failed to load configuration file: {exn.Message}");
                 run = null;
                 return false;
             }
@@ -83,27 +99,27 @@ namespace CoreGCBench.Runner
                 if (version.Name.Any(c => Path.GetInvalidPathChars().Contains(c))
                     || string.IsNullOrEmpty(version.Name))
                 {
-                    Logger.LogAlways($"Version name \"{version.Name}\" has inapporpriate characters for a file path.");
+                    Logger.LogError($"Version name \"{version.Name}\" has inapporpriate characters for a file path.");
                     return false;
                 }
 
                 if (!Directory.Exists(version.Path))
                 {
-                    Logger.LogAlways($"Version path {version.Path} does not exist.");
+                    Logger.LogError($"Version path {version.Path} does not exist.");
                     return false;
                 }
 
                 string coreRun = Path.Combine(version.Path, Utils.CoreRunName);
                 if (!File.Exists(coreRun))
                 {
-                    Logger.LogAlways($"Corerun not found on path {version.Path}.");
+                    Logger.LogError($"Corerun not found on path {version.Path}.");
                     return false;
                 }
             }
 
             if (run.CoreClrVersions.Count == 0)
             {
-                Logger.LogAlways("Must provide at least one version of CoreCLR to test.");
+                Logger.LogError("Must provide at least one version of CoreCLR to test.");
                 return false;
             }
 
@@ -111,13 +127,13 @@ namespace CoreGCBench.Runner
             {
                 if (benchmark.Name.Any(c => Path.GetInvalidPathChars().Contains(c)) || string.IsNullOrEmpty(benchmark.Name))
                 {
-                    Logger.LogAlways($"Benchmark name \"{benchmark.Name}\" has inapporpriate characters for a file path.");
+                    Logger.LogError($"Benchmark name \"{benchmark.Name}\" has inapporpriate characters for a file path.");
                     return false;
                 }
 
                 if (!File.Exists(benchmark.ExecutablePath))
                 {
-                    Logger.LogAlways($"Benchmark executable {benchmark.ExecutablePath} does not exist.");
+                    Logger.LogError($"Benchmark executable {benchmark.ExecutablePath} does not exist.");
                     return false;
                 }
             }
@@ -146,7 +162,7 @@ namespace CoreGCBench.Runner
             // From here we can serialize our RunResult to a json file, drop it in the
             // toplevel directory, zip the whole directory and call it a day.
             Debug.Assert(Directory.GetCurrentDirectory() == options.OutputDirectory);
-            string jsonFile = Path.Combine(options.OutputDirectory, "overall_results.json");
+            string jsonFile = Path.Combine(options.OutputDirectory, Constants.OverallResultsJsonName);
             try
             {
                 string json = JsonConvert.SerializeObject(result, Formatting.Indented);
@@ -154,7 +170,7 @@ namespace CoreGCBench.Runner
             }
             catch (Exception exn)
             {
-                Logger.LogAlways($"Failed to serialize run result to disk: {exn.ToString()}");
+                Logger.LogError($"Failed to serialize run result to disk: {exn.ToString()}");
                 return;
             }
 
@@ -169,7 +185,7 @@ namespace CoreGCBench.Runner
             {
                 if (File.Exists(zipFileName))
                 {
-                    Logger.LogAlways($"Overwriting existing zip file {zipFileName}");
+                    Logger.LogWarning($"Overwriting existing zip file {zipFileName}");
                     File.Delete(zipFileName);
                 }
 
@@ -177,7 +193,7 @@ namespace CoreGCBench.Runner
             }
             catch (Exception exn)
             {
-                Logger.LogAlways($"Failed to zip results folder: {exn.ToString()}");
+                Logger.LogError($"Failed to zip results folder: {exn.ToString()}");
                 return;
             }
 

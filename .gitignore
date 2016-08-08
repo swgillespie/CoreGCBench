@@ -3,6 +3,11 @@
 bin/
 obj/
 Examples/
+Samples/
+example.json
+out.json
+CoreGCBench/
 packages/
 project.lock.json
 *.user
+*.zip
