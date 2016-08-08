@@ -125,7 +125,7 @@ namespace CoreGCBench.Analysis.Runner
         {
             Logger.Log("Beginning comparison analysis");
             Debug.Assert(data.Versions().Count() != 1);
-            var session = new ComparisonAnalysisSession(data, MetricCollection.Default, opts.BaselineVersion);
+            var session = new ComparisonAnalysisSession(data, MetricCollection.Default, opts.BaselineVersion, opts.PValue);
             ComparisonAnalysisResult results = session.RunAnalysis();
             string json = JsonConvert.SerializeObject(results, Formatting.Indented);
             Logger.Log($"Analysis complete, writing to file: {opts.OutputFile}");

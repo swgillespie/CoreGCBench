@@ -57,6 +57,8 @@
     <Compile Include="..\CoreGCBench.Runner\Shared\RunResult.cs" />
     <Compile Include="..\CoreGCBench.Runner\Shared\Benchmark.cs" />
     <Compile Include="..\CoreGCBench.Runner\Shared\Constants.cs" />
+    <Compile Include="TTest.cs" />
+    <Compile Include="TTest.Table.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Dependencies\" />

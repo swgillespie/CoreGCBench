@@ -2,7 +2,7 @@
   "profiles": {
     "CoreGCBench.Runner": {
       "commandName": "Project",
-      "commandLineArgs": "-d Examples\\example.json"
+      "commandLineArgs": "-d example.json"
     }
   }
 }

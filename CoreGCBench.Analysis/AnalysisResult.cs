@@ -30,6 +30,7 @@ namespace CoreGCBench.Analysis
         public Direction Direction;
         public double Value;
         public double StandardDeviation;
+        public int SampleSize;
     }
 
     /*
@@ -63,6 +64,7 @@ namespace CoreGCBench.Analysis
 
     public sealed class ComparisonAnalysisResult
     {
+        public double PValue { get; set; }
         public IList<VersionComparisonAnalysisResult> Candidates { get; set; } = new List<VersionComparisonAnalysisResult>();
     }
 

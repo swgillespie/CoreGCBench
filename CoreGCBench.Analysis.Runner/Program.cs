@@ -14,13 +14,20 @@ This program accepts one or more zip files output by the CoreCLR
 GC Benchmark runner and performs analyses upon them.
 
 usage: CoreGCBench.Analysis.Runner.exe [example1.zip] [example2.zip] ... [exampleN.zip] 
-                                       [-b|--baseline] [-v|--verbose] [-h|--help]
+                                       [-b|--baseline] [-v|--verbose] [-o <FILE>|--output-file <FILE>]
+                                       [-p <VALUE>|--pvalue <VALUE>] [-h|--help]
 
 Options:
     -b|--baseline        Selects the baseline build for this analysis session. Must be
                          one of the named CoreCLR versions contained in the given zip files.
     -v|--verbose         Enable verbose logging.
     -o|--output-file     Sets the output file.
+    -p|--pvalue          Sets the p-value that will be used when performing statistical analysis
+                         on candidate builds against the baseline. A lower p-value results in
+                         more strict analysis and a chance of missing regressions, while a higher
+                         p-value results in looser analysis that may incur false positives.
+                         Defaults to 0.05. Must be one of 0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 
+                         0.02, 0.01, 0.005, 0.002, or 0.001.
     -h|--help            Display this message.
 ";
 
@@ -71,6 +78,7 @@ Options:
             Options opts = new Options();
             int idx = 0;
             bool help = false;
+            string pvalue = null;
             while (idx < args.Length)
             {
                 switch (args[idx])
@@ -103,6 +111,15 @@ Options:
                         idx++;
                         help = true;
                         break;
+                    case "-p":
+                    case "--pvalue":
+                        idx++;
+                        if (idx >= args.Length)
+                        {
+                            ArgumentParseError("expected an argument after pvalue parameter");
+                        }
+                        pvalue = args[idx++];
+                        break;
                     default:
                         opts.ZipFiles.Add(args[idx++]);
                         break;
@@ -113,6 +130,17 @@ Options:
             {
                 Console.WriteLine(Usage);
                 Environment.Exit(0);
+            }
+
+            if (pvalue != null)
+            {
+                double value;
+                if (!double.TryParse(pvalue, out value))
+                {
+                    ArgumentParseError($"not a double: {pvalue}");
+                }
+
+                opts.PValue = value;
             }
 
             if (opts.ZipFiles.Count == 0)

@@ -49,7 +49,8 @@ namespace CoreGCBench.Analysis
                     Name = metric.Name,
                     Unit = metric.Unit,
                     Value = values.Average(),
-                    StandardDeviation = values.StandardDeviation()
+                    StandardDeviation = values.StandardDeviation(),
+                    SampleSize = values.Count
                 };
             }
         }
@@ -86,14 +87,21 @@ namespace CoreGCBench.Analysis
         }
     }
 
+    /// <summary>
+    /// Performs a comparison on one or more candidate builds against a baseline build. A "decision" is made
+    /// for every metric on whether or not that metric regressed, improved, or stayed the same, based on
+    /// statistical analysis.
+    /// </summary>
     public class ComparisonAnalysisSession : AnalysisSession
     {
-        public string m_baseline;
+        private string m_baseline;
+        private double m_pvalue;
 
-        public ComparisonAnalysisSession(AggregateDataSource data, MetricCollection metrics, string baseline)
+        public ComparisonAnalysisSession(AggregateDataSource data, MetricCollection metrics, string baseline, double pvalue)
             : base(data, metrics)
         {
             m_baseline = baseline;
+            m_pvalue = pvalue;
         }
 
         public ComparisonAnalysisResult RunAnalysis()
@@ -112,6 +120,7 @@ namespace CoreGCBench.Analysis
 
             return new ComparisonAnalysisResult
             {
+                PValue = m_pvalue,
                 Candidates = DoVersionComparisons(baseline).ToList()
             };
         }
@@ -166,138 +175,8 @@ namespace CoreGCBench.Analysis
 
         private ComparisonDecision MakeDecision(MetricValue baselineMetric, MetricValue candidateMetric)
         {
-            Debug.Assert(baselineMetric.Name.Equals(candidateMetric.Name));
-            Debug.Assert(baselineMetric.Unit == candidateMetric.Unit);
-            Debug.Assert(baselineMetric.Direction == candidateMetric.Direction);
-
-            // What we have is a mean and a standard deviation. From here, assuming
-            // a normal distribution (which is guaranteed to occur if the number of iterations
-            // is high enough), we can assume that ~68% of the samples taken from this hypothetical
-            // distribution are within one standard deviation of th emean.
-            //
-            // for the initial version of this analysis engine, we're going to raise an error
-            // if the mean of the candidate build has drifted more than one standard deviation
-            // from the mean.
-            double baselineIntervalLo = baselineMetric.Value - baselineMetric.StandardDeviation;
-            double baselineIntervalHi = baselineMetric.Value + baselineMetric.StandardDeviation;
-            ComparisonDecision decision;
-            if (candidateMetric.Value < baselineIntervalLo)
-            {
-                decision = ComparisonDecision.Improvement;
-            }
-            else if (candidateMetric.Value > baselineIntervalHi)
-            {
-                decision = ComparisonDecision.Regression;
-            }
-            else
-            {
-                decision = ComparisonDecision.Indeterminate;
-            }
-
-            if (baselineMetric.Direction != Direction.LowerIsBetter)
-            {
-                switch (decision)
-                {
-                    case ComparisonDecision.Improvement:
-                        decision = ComparisonDecision.Regression;
-                        break;
-                    case ComparisonDecision.Regression:
-                        decision = ComparisonDecision.Improvement;
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            return decision;
+            // we're doing a t-test to make a decision on the test metrics, for now.
+            return TTest.Run(baselineMetric, candidateMetric, m_pvalue);
         }
-
-        /*
-        /// <summary>
-        /// The version to use as a baseline.
-        /// </summary>
-        private string m_baseline;
-
-
-        public ComparisonAnalysisResult RunAnalysis()
-        {
-            Tuple<CoreClrVersion, StandaloneAnalysisResult> baseline = null;
-            List<Tuple<CoreClrVersion, StandaloneAnalysisResult>> results = new List<Tuple<CoreClrVersion, StandaloneAnalysisResult>>();
-            foreach (var tup in CalculateVersionData())
-            {
-                CoreClrVersion version = tup.Item1;
-                StandaloneAnalysisResult result = tup.Item2;
-                if (version.Name.Equals(m_baseline))
-                {
-                    baseline = tup;
-                }
-                else
-                {
-                    results.Add(tup);
-                }
-            }
-
-            return new ComparisonAnalysisResult
-            {
-                Benchmarks = DoComparison(baseline, results).ToList()
-            };
-        }
-
-        private IEnumerable<Tuple<CoreClrVersion, StandaloneAnalysisResult>> CalculateVersionData()
-        {
-            foreach (var version in m_dataSource.Versions())
-            {
-                var result = new StandaloneAnalysisResult();
-                foreach (var bench in version.BenchmarkResults)
-                {
-                    var benchResult = new StandaloneBenchmarkAnalysisResult();
-                    benchResult.Benchmark = bench.Benchmark;
-                    benchResult.Metrics = CalculateMetrics(bench).ToList();
-                    result.Benchmarks.Add(benchResult);
-                }
-
-                yield return Tuple.Create(version.Version, result);
-            }
-        }
-
-        private IEnumerable<ComparisonBenchmarkAnalysisResult> DoComparison(
-            Tuple<CoreClrVersion, StandaloneAnalysisResult> baseline,
-            List<Tuple<CoreClrVersion, StandaloneAnalysisResult>> results)
-        {
-            for (int i = 0; i < baseline.Item2.Benchmarks.Count; i++)
-            {
-                var baselineBench = baseline.Item2.Benchmarks[i];
-                var candidates = results.Select(t => Tuple.Create(t.Item1, t.Item2.Benchmarks[i]));
-
-                for (int j = 0; i < baselineBench.Metrics.Count; j++)
-                {
-                    var metric = baselineBench.Metrics[j];
-                    var comp = new MetricComparison();
-                    comp.Name = metric.Name;
-                    comp.Unit = metric.Unit;
-
-                    var candidateValues = candidates.Select(t => Tuple.Create(t.Item1, t.Item2.Metrics[j]));
-
-                    foreach (var value in candidateValues)
-                    {
-                        comp.CandidateValues[value.Item1.Name] = DiffMetric(metric, value.Item2);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Given a baseline value and a candidate value, performs a diff on the two metrics
-        /// and decides whether or not the candidate value has regressed, improved, or left
-        /// the metric the same.
-        /// </summary>
-        /// <param name="baselineValue">The baseline metric value</param>
-        /// <param name="candidate">The candidate metric value</param>
-        /// <returns>The <see cref="MetricSingleValue"/> for these two metrics</returns>
-        private MetricSingleValue DiffMetric(MetricValue baselineValue, MetricValue candidate)
-        {
-            throw new NotImplementedException();
-        }
-        */
     }
 }

@@ -11,7 +11,7 @@ namespace CoreGCBench.Analysis.Runner
     /// </summary>
     public sealed class Options
     {
-		/// <summary>
+        /// <summary>
         /// The zip files given to us at the command-line. Each zip file may
         /// contain one or more versions of CoreCLR that we will analyze.
         /// </summary>
@@ -32,5 +32,11 @@ namespace CoreGCBench.Analysis.Runner
         /// The output file to write our chosen result to.
         /// </summary>
 		public string OutputFile { get; set; }
+
+        /// <summary>
+        /// The PValue to use when analyzing whether or not a regression
+        /// occured in a competitive analysis. Defaults to 0.05.
+        /// </summary>
+        public double PValue { get; set; } = TTest.StandardPValue;
     }
 }
