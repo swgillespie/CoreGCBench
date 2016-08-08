@@ -18,12 +18,6 @@ namespace CoreGCBench.Analysis
         public abstract Direction Direction { get; }
 
         /// <summary>
-        /// The amount of variance this metric will allow before the
-        /// analysis frameworks considers it to have been regressed or improved.
-        /// </summary>
-        public abstract double VarianceThreshold { get; }
-
-        /// <summary>
         /// The unit of this metric.
         /// </summary>
         public abstract Unit Unit { get; }
@@ -51,6 +45,7 @@ namespace CoreGCBench.Analysis
     public enum Unit
     {
         Milliseconds,
-        Count
+        Count,
+        Megabytes
     }
 }
