@@ -28,6 +28,8 @@ Options:
                          p-value results in looser analysis that may incur false positives.
                          Defaults to 0.05. Must be one of 0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 
                          0.02, 0.01, 0.005, 0.002, or 0.001.
+    -t|--output-type     Sets the output type. Argument must be one of ""html"" or ""json"".
+                         Defaults to json if not specified.
     -h|--help            Display this message.
 ";
 

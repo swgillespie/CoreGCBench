@@ -30,5 +30,31 @@ namespace CoreGCBench.Analysis
             double meanSquaredDiff = values.Sum(v => (v - mean) * (v - mean));
             return Math.Sqrt(meanSquaredDiff / (count - 1));
         }
+
+        public static double MaxOrDefault<T>(this IEnumerable<T> values, Func<T, double> selector)
+        {
+            double accumulator = 0.0;
+            foreach (var value in values)
+            {
+                double calc = selector(value);
+                if (accumulator < calc)
+                {
+                    accumulator = calc;
+                }
+            }
+
+            return accumulator;
+        }
+
+        public static double AverageOrDefault<T>(this IEnumerable<T> values, Func<T, double> selector)
+        {
+            var list = values.ToList();
+            if (list.Count == 0)
+            {
+                return 0.0;
+            }
+
+            return list.Average(selector);
+        }
     }
 }

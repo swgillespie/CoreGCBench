@@ -4,7 +4,6 @@ bin/
 obj/
 Examples/
 Samples/
-example.json
 out.json
 CoreGCBench/
 packages/

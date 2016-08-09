@@ -105,7 +105,7 @@ namespace CoreGCBench.Analysis
             // TODO(segilles, perf) this is very inefficient
             return data.Trace.GC.GCs
                 .Where(gc => gc.Generation == 2 && gc.Type != GCType.BackgroundGC)
-                .Max(gc => gc.PauseDurationMSec);
+                .MaxOrDefault(gc => gc.PauseDurationMSec);
         }
     }
 
@@ -119,7 +119,7 @@ namespace CoreGCBench.Analysis
             // TODO(segilles, perf) this is very inefficient
             return data.Trace.GC.GCs
                 .Where(gc => gc.Generation == 2 && gc.Type != GCType.BackgroundGC)
-                .Average(gc => gc.PauseDurationMSec);
+                .AverageOrDefault(gc => gc.PauseDurationMSec);
         }
     }
 
@@ -133,7 +133,7 @@ namespace CoreGCBench.Analysis
             // TODO(segilles, perf) this is very inefficient
             return data.Trace.GC.GCs
                 .Where(gc => gc.Generation == 2 && gc.Type == GCType.BackgroundGC)
-                .Max(gc => gc.PauseDurationMSec);
+                .MaxOrDefault(gc => gc.PauseDurationMSec);
         }
     }
 
@@ -147,7 +147,7 @@ namespace CoreGCBench.Analysis
             // TODO(segilles, perf) this is very inefficient
             return data.Trace.GC.GCs
                 .Where(gc => gc.Generation == 2 && gc.Type == GCType.BackgroundGC)
-                .Average(gc => gc.PauseDurationMSec);
+                .AverageOrDefault(gc => gc.PauseDurationMSec);
         }
     }
 
@@ -186,7 +186,7 @@ namespace CoreGCBench.Analysis
 
         public override double GetValue(IterationDataSource data)
         {
-            return data.Trace.GC.GCs.Average(gc => gc.GenFragmentationMB(Gens.Gen2));
+            return data.Trace.GC.GCs.AverageOrDefault(gc => gc.GenFragmentationMB(Gens.Gen2));
         }
     }
 
@@ -198,7 +198,9 @@ namespace CoreGCBench.Analysis
 
         public override double GetValue(IterationDataSource data)
         {
-            return data.Trace.GC.GCs.Average(gc => gc.GenSizeAfterMB(Gens.Gen2));
+            return data.Trace.GC.GCs
+                .Where(gc => gc.HeapStats != null)
+                .AverageOrDefault(gc => gc.GenSizeAfterMB(Gens.Gen2));
         }
     }
 
@@ -210,7 +212,9 @@ namespace CoreGCBench.Analysis
 
         public override double GetValue(IterationDataSource data)
         {
-            return data.Trace.GC.GCs.Average(gc => gc.GenSizeAfterMB(Gens.Gen0) 
+            return data.Trace.GC.GCs
+                .Where(gc => gc.HeapStats != null)
+                .AverageOrDefault(gc => gc.GenSizeAfterMB(Gens.Gen0) 
                 + gc.GenSizeAfterMB(Gens.Gen1) 
                 + gc.GenSizeAfterMB(Gens.GenLargeObj));
         }
@@ -226,7 +230,9 @@ namespace CoreGCBench.Analysis
 
         public override double GetValue(IterationDataSource data)
         {
-            return data.Trace.GC.GCs.Count(gc => (gc.GlobalHeapHistory.GlobalMechanisms & GCGlobalMechanisms.Compaction) != 0);
+            return data.Trace.GC.GCs
+                .Where(gc => gc.GlobalHeapHistory != null)
+                .Count(gc => (gc.GlobalHeapHistory.GlobalMechanisms & GCGlobalMechanisms.Compaction) != 0);
         }
     }
 
@@ -238,7 +244,9 @@ namespace CoreGCBench.Analysis
 
         public override double GetValue(IterationDataSource data)
         {
-            return data.Trace.GC.GCs.Count(gc => (gc.GlobalHeapHistory.GlobalMechanisms & GCGlobalMechanisms.Promotion) != 0);
+            return data.Trace.GC.GCs
+                .Where(gc => gc.GlobalHeapHistory != null)
+                .Count(gc => (gc.GlobalHeapHistory.GlobalMechanisms & GCGlobalMechanisms.Promotion) != 0);
         }
     }
 
@@ -250,7 +258,9 @@ namespace CoreGCBench.Analysis
 
         public override double GetValue(IterationDataSource data)
         {
-            return data.Trace.GC.GCs.Count(gc => (gc.GlobalHeapHistory.GlobalMechanisms & GCGlobalMechanisms.Demotion) != 0);
+            return data.Trace.GC.GCs
+                .Where(gc => gc.GlobalHeapHistory != null)
+                .Count(gc => (gc.GlobalHeapHistory.GlobalMechanisms & GCGlobalMechanisms.Demotion) != 0);
         }
     }
 
@@ -262,7 +272,9 @@ namespace CoreGCBench.Analysis
 
         public override double GetValue(IterationDataSource data)
         {
-            return data.Trace.GC.GCs.Count(gc => (gc.GlobalHeapHistory.GlobalMechanisms & GCGlobalMechanisms.CardBundles) != 0);
+            return data.Trace.GC.GCs
+                .Where(gc => gc.GlobalHeapHistory != null)
+                .Count(gc => (gc.GlobalHeapHistory.GlobalMechanisms & GCGlobalMechanisms.CardBundles) != 0);
         }
     }
 

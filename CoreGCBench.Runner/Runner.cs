@@ -219,14 +219,19 @@ namespace CoreGCBench.Runner
             // some work.
 
             string coreRun = Path.Combine(version.Path, Utils.CoreRunName);
+            string arguments = bench.Arguments ?? "";
             Debug.Assert(File.Exists(coreRun));
             Debug.Assert(File.Exists(bench.ExecutablePath));
 
             Process proc = new Process();
             proc.StartInfo.FileName = coreRun;
-            proc.StartInfo.Arguments = bench.ExecutablePath;
+            proc.StartInfo.Arguments = bench.ExecutablePath + " " + arguments;
             proc.StartInfo.UseShellExecute = false;
             proc.StartInfo.CreateNoWindow = false;
+            foreach (var pair in bench.EnvironmentVariables)
+            {
+                proc.StartInfo.Environment[pair.Key] = pair.Value;
+            }
 
             Stopwatch timer = new Stopwatch();
             timer.Start();

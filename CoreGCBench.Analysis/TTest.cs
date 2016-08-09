@@ -73,6 +73,13 @@ namespace CoreGCBench.Analysis
             double targetStatistic = s_tdistTable[degreesOfFreedom][pvalue];
 
             Logger.LogVerbose($"metric {baseline.Name} has test statistic {testStatistic} vs. target {targetStatistic}");
+
+            if (double.IsInfinity(testStatistic) || double.IsNaN(testStatistic))
+            {
+                // if this occured, there was something funny about the data we used to calculate.
+                return ComparisonDecision.Indeterminate;
+            }
+
             if (Math.Abs(testStatistic) < targetStatistic)
             {
                 // there's not enough data to prove or disprove the null hypothesis.

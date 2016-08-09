@@ -51,14 +51,15 @@ namespace CoreGCBench.Analysis
             // for a precise description of what the zip file looks like.
             Logger.LogVerbose("Enumerating versions");
 
-            Parallel.ForEach(Directory.EnumerateDirectories(tempPath), versionFolder =>
+            //Parallel.ForEach(Directory.EnumerateDirectories(tempPath), versionFolder =>
+            foreach (var versionFolder in Directory.EnumerateDirectories(tempPath))
             {
                 var ds = new VersionAnalysisDataSource(m_rootDir, versionFolder);
                 lock (Versions)
                 {
                     Versions.Add(ds);
                 }
-            });
+            };
         }
 
         #region IDisposable Implementation
@@ -134,14 +135,15 @@ namespace CoreGCBench.Analysis
         {
             Logger.Log($"Processing individual version {versionFolder}");
 
-            Parallel.ForEach(Directory.EnumerateDirectories(versionFolder), benchmarkFolder =>
+            //Parallel.ForEach(Directory.EnumerateDirectories(versionFolder), benchmarkFolder =>
+            foreach (var benchmarkFolder in Directory.EnumerateDirectories(versionFolder))
             {
                 var ds = new BenchmarkDataSource(rootDir, benchmarkFolder);
                 lock (BenchmarkResults)
                 {
                     BenchmarkResults.Add(ds);
                 }
-            });
+            };
 
             Version = JsonConvert.DeserializeObject<CoreClrVersion>(
                 File.ReadAllText(Path.Combine(versionFolder,Constants.VersionJsonName)));
@@ -183,14 +185,15 @@ namespace CoreGCBench.Analysis
             Logger.Log($"Processing individual benchmark {benchmarkFolder}");
             // there should be numerically indexed folders in this directory.
 
-            Parallel.ForEach(Directory.EnumerateDirectories(benchmarkFolder), iterFolder =>
+            //Parallel.ForEach(Directory.EnumerateDirectories(benchmarkFolder), iterFolder =>
+            foreach (var iterFolder in Directory.EnumerateDirectories(benchmarkFolder))
             {
                 var ds = new IterationDataSource(rootDir, iterFolder);
                 lock (Iterations)
                 {
                     Iterations.Add(ds);
                 }
-            });
+            };
 
             string benchmarkJsonFile = Path.Combine(benchmarkFolder, Constants.BenchmarkJsonName);
             Debug.Assert(File.Exists(benchmarkJsonFile));

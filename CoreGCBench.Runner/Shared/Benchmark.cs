@@ -27,6 +27,14 @@ namespace CoreGCBench.Common
         public string ExecutablePath { get; set; }
 
         /// <summary>
+        /// The command-line arguments to pass to the benchmark.
+        /// </summary>
+        [JsonProperty(
+            Required = Required.Default,
+            NullValueHandling = NullValueHandling.Ignore)]
+        public string Arguments { get; set; } = null;
+
+        /// <summary>
         /// Whether or not this test uses Server GC. Defaults to false.
         /// </summary>
         [JsonProperty(
