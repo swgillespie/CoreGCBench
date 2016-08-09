@@ -127,9 +127,23 @@ namespace CoreGCBench.Analysis.Runner
             Debug.Assert(data.Versions().Count() != 1);
             var session = new ComparisonAnalysisSession(data, MetricCollection.Default, opts.BaselineVersion, opts.PValue);
             ComparisonAnalysisResult results = session.RunAnalysis();
-            string json = JsonConvert.SerializeObject(results, Formatting.Indented);
             Logger.Log($"Analysis complete, writing to file: {opts.OutputFile}");
-            File.WriteAllText(opts.OutputFile, json);
+
+            switch (opts.OutputType)
+            {
+                case OutputType.Json:
+                    string json = JsonConvert.SerializeObject(results, Formatting.Indented);
+                    File.WriteAllText(opts.OutputFile, json);
+                    break;
+                case OutputType.Csv:
+                    using (StreamWriter writer = new StreamWriter(opts.OutputFile))
+                    {
+                        results.ToCsv(writer);
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException("unimplemented output type: " + opts.OutputType);
+            }
         }
     }
 }

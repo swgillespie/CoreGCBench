@@ -166,6 +166,78 @@ namespace CoreGCBench.Analysis
         }
     }
 
+    public sealed class ForegroundGenZeroGCMetric : Metric
+    {
+        public override Direction Direction => Direction.LowerIsBetter;
+        public override Unit Unit => Unit.Count;
+        public override string Name => "# of Foreground Gen 0 GCs";
+
+        public override double GetValue(IterationDataSource data)
+        {
+            return data.Trace.GC.GCs.Count(gc => gc.Type == GCType.ForegroundGC && gc.Generation == 0);
+        }
+    }
+
+    public sealed class ForegroundGenOneGCMetric : Metric
+    {
+        public override Direction Direction => Direction.LowerIsBetter;
+        public override Unit Unit => Unit.Count;
+        public override string Name => "# of Foreground Gen 1 GCs";
+
+        public override double GetValue(IterationDataSource data)
+        {
+            return data.Trace.GC.GCs.Count(gc => gc.Type == GCType.ForegroundGC && gc.Generation == 1);
+        }
+    }
+
+    public sealed class NonConcurrentGenZeroGCMetric : Metric
+    {
+        public override Direction Direction => Direction.LowerIsBetter;
+        public override Unit Unit => Unit.Count;
+        public override string Name => "# of NonConcurrent Gen 0 GCs";
+
+        public override double GetValue(IterationDataSource data)
+        {
+            return data.Trace.GC.GCs.Count(gc => gc.Type == GCType.NonConcurrentGC && gc.Generation == 0);
+        }
+    }
+
+    public sealed class NonConcurrentGenOneGCMetric : Metric
+    {
+        public override Direction Direction => Direction.LowerIsBetter;
+        public override Unit Unit => Unit.Count;
+        public override string Name => "# of NonConcurrent Gen 1 GCs";
+
+        public override double GetValue(IterationDataSource data)
+        {
+            return data.Trace.GC.GCs.Count(gc => gc.Type == GCType.NonConcurrentGC && gc.Generation == 1);
+        }
+    }
+
+    public sealed class BlockingGenTwoMetric : Metric
+    {
+        public override Direction Direction => Direction.LowerIsBetter;
+        public override Unit Unit => Unit.Count;
+        public override string Name => "# of Blocking Gen 2 GCs";
+
+        public override double GetValue(IterationDataSource data)
+        {
+            return data.Trace.GC.GCs.Count(gc => gc.Type == GCType.NonConcurrentGC && gc.Generation == 2);
+        }
+    }
+
+    public sealed class BackgroundGenTwoMetric : Metric
+    {
+        public override Direction Direction => Direction.LowerIsBetter;
+        public override Unit Unit => Unit.Count;
+        public override string Name => "# of Background Gen 2 GCs";
+
+        public override double GetValue(IterationDataSource data)
+        {
+            return data.Trace.GC.GCs.Count(gc => gc.Type == GCType.BackgroundGC && gc.Generation == 2);
+        }
+    }
+
     public sealed class GCNumberMetric : Metric
     {
         public override Direction Direction => Direction.LowerIsBetter;

@@ -48,6 +48,7 @@
     <Compile Include="AnalysisDataSource.cs" />
     <Compile Include="AnalysisResult.cs" />
     <Compile Include="AnalysisSession.cs" />
+    <Compile Include="CsvExtensions.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Metric.cs" />

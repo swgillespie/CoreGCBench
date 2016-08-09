@@ -233,6 +233,9 @@ namespace CoreGCBench.Runner
                 proc.StartInfo.Environment[pair.Key] = pair.Value;
             }
 
+            proc.StartInfo.Environment[Constants.ServerGCVariable] = bench.ServerGC.GetValueOrDefault(false) ? "1" : "0";
+            proc.StartInfo.Environment[Constants.ConcurrentGCVariable] = bench.ServerGC.GetValueOrDefault(true) ? "1" : "0";
+
             Stopwatch timer = new Stopwatch();
             timer.Start();
             proc.Start();

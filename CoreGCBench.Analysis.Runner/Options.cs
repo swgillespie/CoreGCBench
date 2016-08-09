@@ -38,5 +38,17 @@ namespace CoreGCBench.Analysis.Runner
         /// occured in a competitive analysis. Defaults to 0.05.
         /// </summary>
         public double PValue { get; set; } = TTest.StandardPValue;
+
+        /// <summary>
+        /// The type of file that the infrastructure will output.
+        /// Defaults to JSON.
+        /// </summary>
+        public OutputType OutputType { get; set; } = OutputType.Json;
+    }
+
+    public enum OutputType
+    {
+        Json,
+        Csv
     }
 }

@@ -11,5 +11,7 @@ namespace CoreGCBench.Common
         public const string BenchmarkJsonName = "benchmark_info.json";
         public const string UnzippedTraceName = "UnzippedTrace";
         public const string VersionJsonName = "version_info.json";
+        public const string ServerGCVariable = "COMPlus_gcServer";
+        public const string ConcurrentGCVariable = "COMPlus_gcConcurrent";
     }
 }

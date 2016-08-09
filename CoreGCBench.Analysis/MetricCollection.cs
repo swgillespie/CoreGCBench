@@ -31,13 +31,20 @@ namespace CoreGCBench.Analysis
                 collection.AddMetric(new MaximumPauseBackgroundGenTwoMetric());
                 collection.AddMetric(new MeanPauseBackgroundGenTwoMetric());
                 collection.AddMetric(new ForegroundGCMetric());
+                collection.AddMetric(new ForegroundGenZeroGCMetric());
+                collection.AddMetric(new ForegroundGenOneGCMetric());
+                collection.AddMetric(new NonConcurrentGenZeroGCMetric());
+                collection.AddMetric(new NonConcurrentGenOneGCMetric());
+                collection.AddMetric(new BlockingGenTwoMetric());
+                collection.AddMetric(new BackgroundGenTwoMetric());
                 collection.AddMetric(new GCNumberMetric());
-                collection.AddMetric(new MeanGenTwoFragmentationMetric());
-                collection.AddMetric(new MeanEphemeralSizeMetric());
                 collection.AddMetric(new CompactingGCMechanismMetric());
                 collection.AddMetric(new PromotingGCMechanismMetric());
                 collection.AddMetric(new DemotionGCMechanismMetric());
                 collection.AddMetric(new CardBundleGCMechanismMetric());
+                collection.AddMetric(new MeanGenTwoFragmentationMetric());
+                collection.AddMetric(new MeanEphemeralSizeMetric());
+                collection.AddMetric(new MeanGenTwoSizeMetric());
                 return collection;
             }
         }

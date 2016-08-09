@@ -33,35 +33,6 @@ namespace CoreGCBench.Analysis
         public int SampleSize;
     }
 
-    /*
-    public sealed class ComparisonAnalysisResult
-    {
-        public IList<ComparisonBenchmarkAnalysisResult> Benchmarks { get; set; }
-    }
-
-    public sealed class ComparisonBenchmarkAnalysisResult
-    {
-        public Benchmark Benchmark { get; set; }
-        public IList<MetricComparison> Diffs { get; set; } = new List<MetricComparison>();
-    }
-
-    public class MetricComparison
-    {
-        public string Name { get; set; }
-        [JsonConverter(typeof(StringEnumConverter))]
-        public Unit Unit { get; set; }
-        public MetricSingleValue BaselineValue { get; set; }
-        public IDictionary<string, MetricSingleValue> CandidateValues { get; set; } = new Dictionary<string, MetricSingleValue>();
-        [JsonConverter(typeof(StringEnumConverter))]
-        public ComparisonDecision Result { get; set; }
-    }
-
-    public class MetricSingleValue
-    {
-        public double Value;
-        public double StandardDeviation;
-    }*/
-
     public sealed class ComparisonAnalysisResult
     {
         public double PValue { get; set; }

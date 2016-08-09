@@ -28,7 +28,7 @@ Options:
                          p-value results in looser analysis that may incur false positives.
                          Defaults to 0.05. Must be one of 0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 
                          0.02, 0.01, 0.005, 0.002, or 0.001.
-    -t|--output-type     Sets the output type. Argument must be one of ""html"" or ""json"".
+    -t|--output-type     Sets the output type. Argument must be one of ""csv"" or ""json"".
                          Defaults to json if not specified.
     -h|--help            Display this message.
 ";
@@ -81,6 +81,7 @@ Options:
             int idx = 0;
             bool help = false;
             string pvalue = null;
+            string outputType = null;
             while (idx < args.Length)
             {
                 switch (args[idx])
@@ -122,6 +123,15 @@ Options:
                         }
                         pvalue = args[idx++];
                         break;
+                    case "-t":
+                    case "--output-type":
+                        idx++;
+                        if (idx >= args.Length)
+                        {
+                            ArgumentParseError("expected an argument after pvalue parameter");
+                        }
+                        outputType = args[idx++];
+                        break;
                     default:
                         opts.ZipFiles.Add(args[idx++]);
                         break;
@@ -143,6 +153,22 @@ Options:
                 }
 
                 opts.PValue = value;
+            }
+
+            if (outputType != null)
+            {
+                switch (outputType)
+                {
+                    case "json":
+                        opts.OutputType = OutputType.Json;
+                        break;
+                    case "csv":
+                        opts.OutputType = OutputType.Csv;
+                        break;
+                    default:
+                        ArgumentParseError("unknown output file type: " + outputType);
+                        break;
+                }
             }
 
             if (opts.ZipFiles.Count == 0)
