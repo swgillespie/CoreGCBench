@@ -43,9 +43,9 @@ namespace CoreGCBench.Runner
     public class EtwTraceCollector : ITraceCollector
     {
         private const string PerfViewCommandLineGcOnly =
-            @"/LogFile:perfview.log.txt /GCCollectOnly /NoV2Rundown /NoNGENRundown /NoRundown /merge:true /SessionName:CoreGCBench /zip:true start {0}";
+            @"/LogFile:perfview.log.start.txt /AcceptEULA /GCCollectOnly /NoV2Rundown /NoNGENRundown /NoRundown /merge:true /SessionName:CoreGCBench /zip:true start {0}";
         private const string PerfViewStop =
-            @"/LogFile:Perfview.log.txt /SessionName:CoreGCBench stop";
+            @"/LogFile:perfview.log.stop.txt /SessionName:CoreGCBench stop";
         private const int PerfViewSpinTolerance = 12;
 
         // TODO(segilles) the PerfView that's used should be an option
