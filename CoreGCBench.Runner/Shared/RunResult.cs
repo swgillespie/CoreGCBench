@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace CoreGCBench.Common
@@ -13,7 +14,8 @@ namespace CoreGCBench.Common
     /// </summary>
     public sealed class RunResult
     {
-        public IDictionary<CoreClrVersion, CoreclrVersionRunResult> PerVersionResults { get; } = new Dictionary<CoreClrVersion, CoreclrVersionRunResult>();
+        public RunSettings Settings { get; set; }
+        public IList<Tuple<CoreClrVersion, CoreclrVersionRunResult>> PerVersionResults { get; } = new List<Tuple<CoreClrVersion, CoreclrVersionRunResult>>();
     }
 
     /// <summary>
@@ -74,7 +76,42 @@ namespace CoreGCBench.Common
                 && other.Path.Equals(Path);
         }
 
+        /// <summary>
+        /// Used by JSON.NET when (de)serializing this object.
+        /// </summary>
+        /// <returns>The name of this version.</returns>
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 
+    /// <summary>
+    /// Settings global to a benchmark run.
+    /// </summary>
+    public sealed class RunSettings : IEquatable<RunSettings>
+    {
+        /// <summary>
+        /// Whether or not this run should use Server GC.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool ServerGC { get; set; }
 
+        /// <summary>
+        /// Whether or not this run should use Concurrent GC.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool ConcurrentGC { get; set; }
+
+        public bool Equals(RunSettings other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            return ServerGC == other.ServerGC
+                && ConcurrentGC == other.ConcurrentGC;
+        }
+    }
 }

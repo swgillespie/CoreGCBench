@@ -34,6 +34,12 @@ namespace CoreGCBench.Runner
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public IList<CoreClrVersion> CoreClrVersions { get; set; } = new List<CoreClrVersion>();
+
+        /// <summary>
+        /// Settings for the benchmark run.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public RunSettings Settings { get; set; }
     }
 
     [Flags]

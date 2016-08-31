@@ -1,107 +1,14 @@
 ﻿{
+  "Settings": {
+    "ServerGC": false,
+    "ConcurrentGC": true
+  },
   "Suite": [
     {
       "Name": "ClientSimulator_Concurrent",
       "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\GCSimulator\\GCSimulator.exe",
       "Arguments": "-i 100",
-      "ServerGC": false,
-      "ConcurrentGC": true,
-      "Iterations": 10
-    },
-    {
-      "Name": "ClientSimulator_Server",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\GCSimulator\\GCSimulator.exe",
-      "Arguments": "-i 100",
-      "ServerGC": true,
-      "ConcurrentGC": false,
-      "Iterations": 10
-    },
-    {
-      "Name": "ClientSimulator_Server_One_Thread",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\GCSimulator\\GCSimulator.exe",
-      "Arguments": "-i 10 -notimer -dp 0.0",
-      "ServerGC": true,
-      "ConcurrentGC": false,
-      "Iterations": 10
-    },
-    {
-      "Name": "ClientSimulator_Server_Two_Threads",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\GCSimulator\\GCSimulator.exe",
-      "Arguments": "-i 10 -notimer -dp 0.0 -t 2",
-      "ServerGC": true,
-      "ConcurrentGC": false,
-      "Iterations": 10
-    },
-    {
-      "Name": "ClientSimulator_Server_Four_Threads",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\GCSimulator\\GCSimulator.exe",
-      "Arguments": "-i 10 -notimer -dp 0.0 -t 4",
-      "ServerGC": true,
-      "ConcurrentGC": false,
-      "Iterations": 10
-    },
-    {
-      "Name": "LargeStringConcat",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\LargeStrings\\LargeStrings.exe",
-      "Iterations": 10,
-      "ServerGC": false,
-      "ConcurrentGC": true
-    },
-    {
-      "Name": "LargeStringConcat_Server",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\LargeStrings\\LargeStrings.exe",
-      "ServerGC": true,
-      "ConcurrentGC": true,
-      "Iterations": 10
-    },
-    {
-      "Name": "MidLife_Concurrent",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\MidLife\\MidLife.exe",
-      "ServerGC": false,
-      "ConcurrentGC": true,
-      "Iterations": 10
-    },
-    {
-      "Name": "MidLife_Concurrent_Server",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\MidLife\\MidLife.exe",
-      "ServerGC": true,
-      "ConcurrentGC": true,
-      "Iterations": 10
-    },
-    {
-      "Name": "MidLife_Server",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\MidLife\\MidLife.exe",
-      "ServerGC": true,
-      "ConcurrentGC": false,
-      "Iterations": 10
-    },
-    {
-      "Name": "MidLife",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\MidLife\\MidLife.exe",
-      "ServerGC": false,
-      "ConcurrentGC": false,
-      "Iterations": 10
-    },
-    {
-      "Name": "ConcurrentSpin",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\ConcurrentSpin\\ConcurrentSpin.exe",
-      "ServerGC": false,
-      "ConcurrentGC": true,
-      "Iterations": 10
-    },
-    {
-      "Name": "ConcurrentSpin_Server",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\ConcurrentSpin\\ConcurrentSpin.exe",
-      "ServerGC": true,
-      "ConcurrentGC": true,
-      "Iterations": 10
-    },
-    {
-      "Name": "ConcurrentSpin_Server_NonConcurrent",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\ConcurrentSpin\\ConcurrentSpin.exe",
-      "ServerGC": true,
-      "ConcurrentGC": false,
-      "Iterations": 10
+      "Iterations": 5
     }
   ],
   "CollectionLevel": 0,
