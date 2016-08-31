@@ -35,22 +35,6 @@ namespace CoreGCBench.Common
         public string Arguments { get; set; } = null;
 
         /// <summary>
-        /// Whether or not this test uses Server GC. Defaults to false.
-        /// </summary>
-        [JsonProperty(
-            Required = Required.Default, 
-            NullValueHandling = NullValueHandling.Ignore)]
-        public bool? ServerGC { get; set; } = null;
-
-        /// <summary>
-        /// Whether or not this test uses Concurrent GC. Defaults to true.
-        /// </summary>
-        [JsonProperty(
-            Required = Required.Default, 
-            NullValueHandling = NullValueHandling.Ignore)]
-        public bool? ConcurrentGC { get; set; } = null;
-
-        /// <summary>
         /// Whether this test should end after some number of Gen0 GC's.
         /// </summary>
         [JsonProperty(

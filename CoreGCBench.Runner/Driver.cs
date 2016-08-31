@@ -199,9 +199,14 @@ namespace CoreGCBench.Runner
 
             Logger.LogAlways($"Wrote results to zip file: {zipFileName}");
 
-            // TODO(segilles) be VERY careful about this. not enabled until we're sure
-            // i'm not going to wreck my machine.
-            //Directory.Delete(options.OutputDirectory, true);
+            try
+            {
+                Directory.Delete(options.OutputDirectory, true);
+            }
+            catch (Exception exn)
+            {
+                Logger.LogWarning($"Failed to delete output directory: {exn.Message}");
+            }
         }
     }
 }

@@ -12,6 +12,7 @@ namespace CoreGCBench.Analysis
 {
     public sealed class StandaloneAnalysisResult
     {
+        public RunSettings Settings { get; set; }
         public IList<StandaloneBenchmarkAnalysisResult> Benchmarks { get; set; } = new List<StandaloneBenchmarkAnalysisResult>();
     }
 
@@ -35,6 +36,7 @@ namespace CoreGCBench.Analysis
 
     public sealed class ComparisonAnalysisResult
     {
+        public RunSettings Settings { get; set; }
         public double PValue { get; set; }
         public IList<VersionComparisonAnalysisResult> Candidates { get; set; } = new List<VersionComparisonAnalysisResult>();
     }

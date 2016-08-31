@@ -4,6 +4,7 @@
 
 using CoreGCBench.Common;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -60,6 +61,9 @@ namespace CoreGCBench.Runner
         public RunResult Run()
         {
             RunResult result = new RunResult();
+            result.Settings = m_run.Settings;
+            Logger.LogAlways($"Running benchmarks with server GC: {m_run.Settings.ServerGC}");
+            Logger.LogAlways($"Running benchmarks with concurrent GC: {m_run.Settings.ConcurrentGC}");
             foreach (var version in m_run.CoreClrVersions)
             {
                 // these should have been validated already before runnning
@@ -67,10 +71,10 @@ namespace CoreGCBench.Runner
                 Debug.Assert(!string.IsNullOrEmpty(version.Name));
                 Debug.Assert(Directory.Exists(version.Path));
                 CoreclrVersionRunResult versionResult = RunVersion(version);
-                result.PerVersionResults[version] = versionResult;
+                result.PerVersionResults.Add(Tuple.Create(version, versionResult));
             }
 
-            return result;
+            return result; 
         }
         
         /// <summary>
@@ -233,8 +237,8 @@ namespace CoreGCBench.Runner
                 proc.StartInfo.Environment[pair.Key] = pair.Value;
             }
 
-            proc.StartInfo.Environment[Constants.ServerGCVariable] = bench.ServerGC.GetValueOrDefault(false) ? "1" : "0";
-            proc.StartInfo.Environment[Constants.ConcurrentGCVariable] = bench.ConcurrentGC.GetValueOrDefault(true) ? "1" : "0";
+            proc.StartInfo.Environment[Constants.ServerGCVariable] = m_run.Settings.ServerGC ? "1" : "0";
+            proc.StartInfo.Environment[Constants.ConcurrentGCVariable] = m_run.Settings.ConcurrentGC ? "1" : "0";
 
             Stopwatch timer = new Stopwatch();
             timer.Start();

@@ -120,6 +120,7 @@ namespace CoreGCBench.Analysis
 
             return new ComparisonAnalysisResult
             {
+                Settings = m_dataSource.Settings,
                 PValue = m_pvalue,
                 Candidates = DoVersionComparisons(baseline).ToList()
             };

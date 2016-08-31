@@ -129,20 +129,27 @@ namespace CoreGCBench.Analysis.Runner
             ComparisonAnalysisResult results = session.RunAnalysis();
             Logger.Log($"Analysis complete, writing to file: {opts.OutputFile}");
 
-            switch (opts.OutputType)
+            try
             {
-                case OutputType.Json:
-                    string json = JsonConvert.SerializeObject(results, Formatting.Indented);
-                    File.WriteAllText(opts.OutputFile, json);
-                    break;
-                case OutputType.Csv:
-                    using (StreamWriter writer = new StreamWriter(opts.OutputFile))
-                    {
-                        results.ToCsv(writer);
-                    }
-                    break;
-                default:
-                    throw new NotImplementedException("unimplemented output type: " + opts.OutputType);
+                switch (opts.OutputType)
+                {
+                    case OutputType.Json:
+                        string json = JsonConvert.SerializeObject(results, Formatting.Indented);
+                        File.WriteAllText(opts.OutputFile, json);
+                        break;
+                    case OutputType.Csv:
+                        using (StreamWriter writer = new StreamWriter(opts.OutputFile))
+                        {
+                            results.ToCsv(writer);
+                        }
+                        break;
+                    default:
+                        throw new NotImplementedException("unimplemented output type: " + opts.OutputType);
+                }
+            }
+            catch (IOException exn)
+            {
+                Logger.LogError($"Failed to write to disk: {exn.Message}");
             }
         }
     }

@@ -37,6 +37,11 @@ namespace CoreGCBench.Analysis
         /// </summary>
         public IList<VersionAnalysisDataSource> Versions { get; set; } = new List<VersionAnalysisDataSource>();
 
+        /// <summary>
+        /// The run settings used in the run that created this data source.
+        /// </summary>
+        public RunSettings Settings { get; set; }
+
         public AnalysisDataSource(string zipFile)
         {
             Logger.Log($"Beginning data source construction for zip file {zipFile}");
@@ -46,6 +51,11 @@ namespace CoreGCBench.Analysis
 
             Logger.Log("Extracting zip file");
             ZipFile.ExtractToDirectory(zipFile, tempPath);
+
+            Logger.Log("Loading JSON result file");
+            var outputJson = Path.Combine(tempPath, Constants.OverallResultsJsonName);
+            RunResult result = JsonConvert.DeserializeObject<RunResult>(File.ReadAllText(outputJson));
+            Settings = result.Settings;
 
             // see the comment in CoreGCBench.Runner.Driver::PackageResults(RunResult, Options)
             // for a precise description of what the zip file looks like.
