@@ -1,12 +1,13 @@
 ﻿{
   "Settings": {
     "ServerGC": false,
-    "ConcurrentGC": true
+    "ConcurrentGC": true,
+    "TestProbeRoot": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release"
   },
   "Suite": [
     {
       "Name": "ClientSimulator_Concurrent",
-      "ExecutablePath": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\GC\\Performance\\Tests\\GCSimulator\\GCSimulator.exe",
+      "ExecutablePath": "GC\\Performance\\Tests\\GCSimulator\\GCSimulator.exe",
       "Arguments": "-i 100",
       "Iterations": 5
     }

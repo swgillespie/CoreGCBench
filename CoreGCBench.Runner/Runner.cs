@@ -40,18 +40,27 @@ namespace CoreGCBench.Runner
         private Stack<string> m_relativePath = new Stack<string>();
 
         /// <summary>
+        /// Map from benchmarks to resolved absolute paths to executables. Probing for
+        /// executables is done as part of the "validation" step of the run, and this
+        /// class is only concerned about running tests on a configuration that is known
+        /// to be valid, so this map is provided to the runner upon construction.
+        /// </summary>
+        private IDictionary<Benchmark, string> m_executableProbeMap;
+
+        /// <summary>
         /// Constructs a new runner that will run the given suite
         /// with the given options.
         /// </summary>
         /// <param name="suite">The benchmark suite to run. Must be validated already.</param>
         /// <param name="options">The options governing the benchmark run</param>
-        public Runner(BenchmarkRun suite, Options options)
+        public Runner(BenchmarkRun suite, Options options, IDictionary<Benchmark, string> executableProbeMap)
         {
             Debug.Assert(suite != null);
             Debug.Assert(options != null);
             m_run = suite;
             m_options = options;
             m_traceCollector = TraceCollectorFactory.Create();
+            m_executableProbeMap = executableProbeMap;
         }
 
         /// <summary>
@@ -214,7 +223,7 @@ namespace CoreGCBench.Runner
         /// </summary>
         /// <param name="version">The coreclr version to test</param>
         /// <param name="bench">The benchmark to run</param>
-        /// <returns></returns>
+        /// <returns>The result from running the benchmark</returns>
         private IterationResult RunBenchmarkImpl(CoreClrVersion version, Benchmark bench)
         {
             // TODO(segilles) we'd like to have precise control over when the benchmark
@@ -225,11 +234,12 @@ namespace CoreGCBench.Runner
             string coreRun = Path.Combine(version.Path, Utils.CoreRunName);
             string arguments = bench.Arguments ?? "";
             Debug.Assert(File.Exists(coreRun));
-            Debug.Assert(File.Exists(bench.ExecutablePath));
+            Debug.Assert(m_executableProbeMap.ContainsKey(bench));
+            string exePath = m_executableProbeMap[bench];
 
             Process proc = new Process();
             proc.StartInfo.FileName = coreRun;
-            proc.StartInfo.Arguments = bench.ExecutablePath + " " + arguments;
+            proc.StartInfo.Arguments = exePath + " " + arguments;
             proc.StartInfo.UseShellExecute = false;
             proc.StartInfo.CreateNoWindow = false;
             foreach (var pair in bench.EnvironmentVariables)

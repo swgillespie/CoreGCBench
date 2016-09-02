@@ -103,6 +103,13 @@ namespace CoreGCBench.Common
         [JsonProperty(Required = Required.Always)]
         public bool ConcurrentGC { get; set; }
 
+        /// <summary>
+        /// Absolute path to the root folder that the test framework will use
+        /// to probe for test executables.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string TestProbeRoot { get; set; }
+
         public bool Equals(RunSettings other)
         {
             if (other == null)
