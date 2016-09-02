@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Threading;
 
 namespace CoreGCBench.Runner
 {
@@ -47,6 +48,12 @@ namespace CoreGCBench.Runner
         /// (expected to be json) instead of loading the config file from disk.
         /// </summary>
         public string ConfigJson { get; set; }
+
+        /// <summary>
+        /// The CancellationToken signaled if the runner process is
+        /// Ctrl+C'd.
+        /// </summary>
+        public CancellationToken CancellationToken { get; set; }
     }
 
     public enum Verbosity

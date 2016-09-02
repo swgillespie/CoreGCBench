@@ -21,7 +21,6 @@ namespace CoreGCBench.Runner
         /// <param name="options">The options parsed from the command-line</param>
         public static void Execute(Options options)
         {
-            Logger.Initialize(options);
             Logger.LogAlways($"Beginning benchmark run with config: {options.ConfigFile}");
             Logger.LogAlways($"Output directory: {options.OutputDirectory}");
 
@@ -35,35 +34,55 @@ namespace CoreGCBench.Runner
                 return;
             }
 
+            options.CancellationToken.ThrowIfCancellationRequested();
             Debug.Assert(run != null);
             if (!ValidateConfig(run))
             {
                 return;
             }
 
+            options.CancellationToken.ThrowIfCancellationRequested();
             if (!ProbeForExecutables(run, out probeMap))
             {
                 return;
             }
 
+            options.CancellationToken.ThrowIfCancellationRequested();
             if (options.DryRun)
             {
                 // if this is a dry run, we're done here.
                 return;
             }
 
-            // otherwise, we're going to begin execution.
-            // create the output directory, if it doesn't exist yet.
-            if (!Directory.Exists(options.OutputDirectory))
+            try
             {
-                Directory.CreateDirectory(options.OutputDirectory);
+                // otherwise, we're going to begin execution.
+                // create the output directory, if it doesn't exist yet.
+                if (!Directory.Exists(options.OutputDirectory))
+                {
+                    Directory.CreateDirectory(options.OutputDirectory);
+                }
+
+                Directory.SetCurrentDirectory(options.OutputDirectory);
+
+                Runner runner = new Runner(run, options, probeMap);
+                RunResult result = runner.Run();
+                PackageResults(result, options);
             }
-
-            Directory.SetCurrentDirectory(options.OutputDirectory);
-
-            Runner runner = new Runner(run, options, probeMap);
-            RunResult result = runner.Run();
-            PackageResults(result, options);
+            finally
+            {
+                // the finally here is to ensure that we clean up after ourselves,
+                // even if we get cancelled.
+                try
+                {
+                    Directory.SetCurrentDirectory("..");
+                    Directory.Delete(options.OutputDirectory, true);
+                }
+                catch (Exception exn)
+                {
+                    Logger.LogWarning($"Failed to delete output directory: {exn.Message}");
+                }
+            }
         }
 
         /// <summary>
@@ -285,16 +304,6 @@ namespace CoreGCBench.Runner
             }
 
             Logger.LogAlways($"Wrote results to zip file: {zipFileName}");
-
-            try
-            {
-                Directory.SetCurrentDirectory("..");
-                Directory.Delete(options.OutputDirectory, true);
-            }
-            catch (Exception exn)
-            {
-                Logger.LogWarning($"Failed to delete output directory: {exn.Message}");
-            }
         }
     }
 }

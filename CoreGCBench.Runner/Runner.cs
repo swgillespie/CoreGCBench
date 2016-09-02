@@ -69,6 +69,7 @@ namespace CoreGCBench.Runner
         /// <returns>The results of the benchmark run</returns>
         public RunResult Run()
         {
+            ThrowIfCancellationRequested();
             RunResult result = new RunResult();
             result.Settings = m_run.Settings;
             Logger.LogAlways($"Running benchmarks with server GC: {m_run.Settings.ServerGC}");
@@ -83,9 +84,9 @@ namespace CoreGCBench.Runner
                 result.PerVersionResults.Add(Tuple.Create(version, versionResult));
             }
 
-            return result; 
+            return result;
         }
-        
+
         /// <summary>
         /// Runs the benchmark suite on a single version of CoreCLR and
         /// returns the results.
@@ -95,6 +96,7 @@ namespace CoreGCBench.Runner
         /// <returns>The results of this run</returns>
         private CoreclrVersionRunResult RunVersion(CoreClrVersion version)
         {
+            ThrowIfCancellationRequested();
             Logger.LogAlways($"Beginning run of version \"{version.Name}\"");
             CoreclrVersionRunResult result = new CoreclrVersionRunResult();
             Debug.Assert(Directory.GetCurrentDirectory() == m_options.OutputDirectory);
@@ -136,6 +138,7 @@ namespace CoreGCBench.Runner
         /// <returns>The result from running the benchmark</returns>
         private BenchmarkResult RunBenchmark(CoreClrVersion version, Benchmark bench)
         {
+            ThrowIfCancellationRequested();
             Logger.LogAlways($"Running benchmark {bench.Name}");
             string folderName = Path.Combine(Directory.GetCurrentDirectory(), bench.Name);
             Directory.CreateDirectory(folderName);
@@ -162,6 +165,7 @@ namespace CoreGCBench.Runner
         /// <returns>The result of running the benchmark</returns>
         private BenchmarkResult RunBenchmarkImplWithIterations(CoreClrVersion version, Benchmark bench)
         {
+            ThrowIfCancellationRequested();
             Logger.LogAlways($"Running iterations for benchmark {bench.Name}");
             BenchmarkResult result = new BenchmarkResult();
             result.Benchmark = bench;
@@ -226,6 +230,7 @@ namespace CoreGCBench.Runner
         /// <returns>The result from running the benchmark</returns>
         private IterationResult RunBenchmarkImpl(CoreClrVersion version, Benchmark bench)
         {
+            ThrowIfCancellationRequested();
             // TODO(segilles) we'd like to have precise control over when the benchmark
             // terminates. After some number of GCs, after some mechanisms get exercised,
             // after some amount of time elapses, etc. This can all be done here with
@@ -255,6 +260,7 @@ namespace CoreGCBench.Runner
             proc.Start();
             proc.WaitForExit();
             timer.Stop();
+            ThrowIfCancellationRequested();
 
             IterationResult result = new IterationResult();
             result.DurationMsec = timer.ElapsedMilliseconds;
@@ -262,5 +268,15 @@ namespace CoreGCBench.Runner
             result.Pid = proc.Id;
             return result;
         }
+
+        /// <summary>
+        /// Throws an <see cref="OperationCanceledException"/> if cancellation was
+        /// requested.
+        /// </summary>
+        private void ThrowIfCancellationRequested()
+        {
+            m_options.CancellationToken.ThrowIfCancellationRequested();
+        }
+
     }
 }

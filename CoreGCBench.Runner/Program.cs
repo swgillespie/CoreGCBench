@@ -5,6 +5,7 @@
 using System;
 using System.CommandLine;
 using System.Diagnostics;
+using System.Threading;
 
 namespace CoreGCBench.Runner
 {
@@ -22,6 +23,11 @@ garbage collector.
             try
             {
                 ActualMain(args);
+                return 0;
+            }
+            catch (OperationCanceledException)
+            {
+                // normal termination through ctrl-c.
                 return 0;
             }
             catch (Exception exn)
@@ -42,6 +48,17 @@ garbage collector.
         private static void ActualMain(string[] args)
         {
             Options options = ParseCommandLine(args);
+            Logger.Initialize(options);
+
+            CancellationTokenSource cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (obj, arg) =>
+            {
+                arg.Cancel = true;
+                Logger.LogWarning("Cancellation requested via Ctrl-C, cleaning up...");
+                cts.Cancel();
+            };
+
+            options.CancellationToken = cts.Token;
             Driver.Execute(options);
         }
 
