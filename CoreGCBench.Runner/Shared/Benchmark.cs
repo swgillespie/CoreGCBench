@@ -21,7 +21,7 @@ namespace CoreGCBench.Common
         public string Name { get; set; }
 
         /// <summary>
-        /// The path to the test executable.
+        /// The path to the test executable. Always a relative path.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string ExecutablePath { get; set; }
