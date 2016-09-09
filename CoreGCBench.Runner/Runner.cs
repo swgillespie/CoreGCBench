@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace CoreGCBench.Runner
 {
@@ -72,6 +73,11 @@ namespace CoreGCBench.Runner
             ThrowIfCancellationRequested();
             RunResult result = new RunResult();
             result.Settings = m_run.Settings;
+            result.Environment = new RunEnvironment();
+            result.Environment.RunStartTime = DateTime.Now;
+            result.Environment.FrameworkDescription = RuntimeInformation.FrameworkDescription;
+            result.Environment.OperatingSystem = RuntimeInformation.OSDescription;
+            result.Environment.OSArchitecture = RuntimeInformation.OSArchitecture.ToString();
             Logger.LogAlways($"Running benchmarks with server GC: {m_run.Settings.ServerGC}");
             Logger.LogAlways($"Running benchmarks with concurrent GC: {m_run.Settings.ConcurrentGC}");
             foreach (var version in m_run.CoreClrVersions)
