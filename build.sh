@@ -1,2 +1,2 @@
-dotnet restore CoreGCBench.Runner.Tests/project.json
-dotnet test CoreGCBench.Runner.Tests/project.json
+dotnet restore CoreGCBench.Runner/project.json
+dotnet build CoreGCBench.Runner/project.json

@@ -14,7 +14,19 @@ namespace CoreGCBench.Common
     /// </summary>
     public sealed class RunResult
     {
+        /// <summary>
+        /// The settings used to perform the run.
+        /// </summary>
         public RunSettings Settings { get; set; }
+
+        /// <summary>
+        /// The environment in which the run was performed.
+        /// </summary>
+        public RunEnvironment Environment { get; set; }
+
+        /// <summary>
+        /// The results of the run, organized per version.
+        /// </summary>
         public IList<Tuple<CoreClrVersion, CoreclrVersionRunResult>> PerVersionResults { get; } = new List<Tuple<CoreClrVersion, CoreclrVersionRunResult>>();
     }
 
@@ -120,5 +132,34 @@ namespace CoreGCBench.Common
             return ServerGC == other.ServerGC
                 && ConcurrentGC == other.ConcurrentGC;
         }
+    }
+
+    /// <summary>
+    /// The environment in which the benchmark was run,
+    /// including the time, operating system, etc.
+    /// </summary>
+    public sealed class RunEnvironment 
+    {
+        /// <summary>
+        /// The date and time that the run began.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public DateTime RunStartTime { get; set; }
+
+        /// <summary>
+        /// The operating system used to perform the run. 
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string OperatingSystem { get; set; }
+
+        /// <summary>
+        /// A description of the framework that performed this run.
+        /// </summary>
+        public string FrameworkDescription { get; set; }
+
+        /// <summary>
+        /// The architecture of the operating system performing this run.
+        /// </summary>
+        public string OSArchitecture { get; set; }
     }
 }
