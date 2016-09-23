@@ -7,7 +7,7 @@ namespace CoreGCBench.Runner.Termination
     /// An ITerminationCondition is a class whose responsibility is to
     /// determine, when asked, whether or not the running benchmark should terminate.
     /// </summary>
-    public abstract class ITerminationCondition : IDisposable
+    public abstract class TerminationCondition : IDisposable
     {
         /// <summary>
         /// Asks this TerminationCondition whether or not it thinks it should terminate.

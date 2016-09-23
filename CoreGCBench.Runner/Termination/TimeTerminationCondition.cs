@@ -7,7 +7,7 @@ namespace CoreGCBench.Runner.Termination
     /// TimeTerminationCondition implements time-based termination. It will
     /// signal a process for termination once it has run for a given period of time.
     /// </summary>
-    public sealed class TimeTerminationCondition : ITerminationCondition
+    public sealed class TimeTerminationCondition : TerminationCondition
     {
         /// <summary>
         /// The time span that the Process should be allowed to run,

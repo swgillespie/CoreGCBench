@@ -156,7 +156,7 @@ namespace CoreGCBench.Runner
             m_relativePath.Push(bench.Name);
             try
             {
-                using (ITerminationCondition condition = ConstructTerminationCondition(bench))
+                using (TerminationCondition condition = ConstructTerminationCondition(bench))
                 {
                     ThrowIfCancellationRequested();
                     return RunBenchmarkImplWithIterations(version, bench, condition);
@@ -176,7 +176,7 @@ namespace CoreGCBench.Runner
         /// </summary>
         /// <param name="bench">The benchmark specification</param>
         /// <returns>An appropriate <see cref="TerminationCondition"/>, given the specification.</returns>
-        private ITerminationCondition ConstructTerminationCondition(Benchmark bench)
+        private TerminationCondition ConstructTerminationCondition(Benchmark bench)
         {
             // TODO(#5) today, only time-specific terminations are supported.
             if (bench.EndAfterTimeElapsedSeconds.HasValue)
@@ -197,7 +197,7 @@ namespace CoreGCBench.Runner
         /// <param name="bench">The benchmark to run</param>
         /// <param name="termCondition">The termination condition for this benchmark</param>
         /// <returns>The result of running the benchmark</returns>
-        private BenchmarkResult RunBenchmarkImplWithIterations(CoreClrVersion version, Benchmark bench, ITerminationCondition termCondition)
+        private BenchmarkResult RunBenchmarkImplWithIterations(CoreClrVersion version, Benchmark bench, TerminationCondition termCondition)
         {
             ThrowIfCancellationRequested();
             Logger.LogAlways($"Running iterations for benchmark {bench.Name}");
@@ -264,7 +264,7 @@ namespace CoreGCBench.Runner
         /// <param name="bench">The benchmark to run</param>
         /// <param name="termCondition">The termination condition for this benchmark</param>
         /// <returns>The result from running the benchmark</returns>
-        private IterationResult RunBenchmarkImpl(CoreClrVersion version, Benchmark bench, ITerminationCondition termCondition)
+        private IterationResult RunBenchmarkImpl(CoreClrVersion version, Benchmark bench, TerminationCondition termCondition)
         {
             ThrowIfCancellationRequested();
             string coreRun = Path.Combine(version.Path, Utils.CoreRunName);
@@ -301,7 +301,7 @@ namespace CoreGCBench.Runner
 
         /// <summary>
         /// Starts the given process and polls it for completion. At every poll
-        /// interval, it asks the given <see cref="ITerminationCondition"/> if this
+        /// interval, it asks the given <see cref="TerminationCondition"/> if this
         /// process needs to be killed, and kills it if needs to.
         /// 
         /// If the CancellationToken is signalled while in this method, the process
@@ -311,7 +311,7 @@ namespace CoreGCBench.Runner
         /// </summary>
         /// <param name="termCondition">The termination condition for this process</param>
         /// <param name="proc">The unstarted process</param>
-        private void RunProcess(ITerminationCondition termCondition, Process proc)
+        private void RunProcess(TerminationCondition termCondition, Process proc)
         {
             ThrowIfCancellationRequested();
 
