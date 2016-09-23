@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using CoreGCBench.Common;
+using CoreGCBench.Runner.Termination;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace CoreGCBench.Runner
 {
@@ -90,6 +92,7 @@ namespace CoreGCBench.Runner
                 result.PerVersionResults.Add(Tuple.Create(version, versionResult));
             }
 
+            ThrowIfCancellationRequested();
             return result;
         }
 
@@ -126,6 +129,7 @@ namespace CoreGCBench.Runner
                     Path.Combine(folderName, Constants.VersionJsonName),
                     JsonConvert.SerializeObject(version));
 
+                ThrowIfCancellationRequested();
                 return result;
             }
             finally
@@ -152,7 +156,11 @@ namespace CoreGCBench.Runner
             m_relativePath.Push(bench.Name);
             try
             {
-                return RunBenchmarkImplWithIterations(version, bench);
+                using (ITerminationCondition condition = ConstructTerminationCondition(bench))
+                {
+                    ThrowIfCancellationRequested();
+                    return RunBenchmarkImplWithIterations(version, bench, condition);
+                }
             }
             finally
             {
@@ -163,13 +171,33 @@ namespace CoreGCBench.Runner
         }
 
         /// <summary>
+        /// Given the Benchmark specification, determine the <see cref="TerminationCondition"/>
+        /// appropriate for this benchmark.
+        /// </summary>
+        /// <param name="bench">The benchmark specification</param>
+        /// <returns>An appropriate <see cref="TerminationCondition"/>, given the specification.</returns>
+        private ITerminationCondition ConstructTerminationCondition(Benchmark bench)
+        {
+            // TODO(#5) today, only time-specific terminations are supported.
+            if (bench.EndAfterTimeElapsedSeconds.HasValue)
+            {
+                Logger.LogVerbose($"Benchmark \"{bench.Name}\" has time-based termination after {bench.EndAfterTimeElapsedSeconds.Value} seconds");
+                return new TimeTerminationCondition(TimeSpan.FromSeconds(bench.EndAfterTimeElapsedSeconds.Value));
+            }
+
+            Logger.LogVerbose($"Benchmark \"{bench.Name}\" has no termination condition");
+            return new NullTerminationCondition();
+        }
+
+        /// <summary>
         /// Runs a single iteration of a benchmark. If no iteration number if specified,
         /// the benchmark is run once.
         /// </summary>
         /// <param name="version">The version of CoreCLR to run the benchmark on</param>
         /// <param name="bench">The benchmark to run</param>
+        /// <param name="termCondition">The termination condition for this benchmark</param>
         /// <returns>The result of running the benchmark</returns>
-        private BenchmarkResult RunBenchmarkImplWithIterations(CoreClrVersion version, Benchmark bench)
+        private BenchmarkResult RunBenchmarkImplWithIterations(CoreClrVersion version, Benchmark bench, ITerminationCondition termCondition)
         {
             ThrowIfCancellationRequested();
             Logger.LogAlways($"Running iterations for benchmark {bench.Name}");
@@ -192,7 +220,7 @@ namespace CoreGCBench.Runner
                     try
                     {
                         // we've got everything set up, time to run.
-                        iterResult = RunBenchmarkImpl(version, bench);
+                        iterResult = RunBenchmarkImpl(version, bench, termCondition);
                     }
                     finally
                     {
@@ -224,6 +252,7 @@ namespace CoreGCBench.Runner
                 Path.Combine(Directory.GetCurrentDirectory(), Constants.BenchmarkJsonName), 
                 JsonConvert.SerializeObject(bench, Formatting.Indented));
 
+            ThrowIfCancellationRequested();
             return result;
         }
 
@@ -233,15 +262,11 @@ namespace CoreGCBench.Runner
         /// </summary>
         /// <param name="version">The coreclr version to test</param>
         /// <param name="bench">The benchmark to run</param>
+        /// <param name="termCondition">The termination condition for this benchmark</param>
         /// <returns>The result from running the benchmark</returns>
-        private IterationResult RunBenchmarkImpl(CoreClrVersion version, Benchmark bench)
+        private IterationResult RunBenchmarkImpl(CoreClrVersion version, Benchmark bench, ITerminationCondition termCondition)
         {
             ThrowIfCancellationRequested();
-            // TODO(segilles) we'd like to have precise control over when the benchmark
-            // terminates. After some number of GCs, after some mechanisms get exercised,
-            // after some amount of time elapses, etc. This can all be done here with
-            // some work.
-
             string coreRun = Path.Combine(version.Path, Utils.CoreRunName);
             string arguments = bench.Arguments ?? "";
             Debug.Assert(File.Exists(coreRun));
@@ -261,18 +286,78 @@ namespace CoreGCBench.Runner
             proc.StartInfo.Environment[Constants.ServerGCVariable] = m_run.Settings.ServerGC ? "1" : "0";
             proc.StartInfo.Environment[Constants.ConcurrentGCVariable] = m_run.Settings.ConcurrentGC ? "1" : "0";
 
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-            proc.Start();
-            proc.WaitForExit();
-            timer.Stop();
-            ThrowIfCancellationRequested();
+            // run the process!
+            RunProcess(termCondition, proc);
+            Debug.Assert(proc.HasExited);
 
             IterationResult result = new IterationResult();
-            result.DurationMsec = timer.ElapsedMilliseconds;
+            result.DurationMsec = (long)(proc.ExitTime - proc.StartTime).TotalMilliseconds;
             result.ExitCode = proc.ExitCode;
             result.Pid = proc.Id;
+
+            ThrowIfCancellationRequested();
             return result;
+        }
+
+        /// <summary>
+        /// Starts the given process and polls it for completion. At every poll
+        /// interval, it asks the given <see cref="ITerminationCondition"/> if this
+        /// process needs to be killed, and kills it if needs to.
+        /// 
+        /// If the CancellationToken is signalled while in this method, the process
+        /// will be killed.
+        /// 
+        /// The process should not be running when this method exists.
+        /// </summary>
+        /// <param name="termCondition">The termination condition for this process</param>
+        /// <param name="proc">The unstarted process</param>
+        private void RunProcess(ITerminationCondition termCondition, Process proc)
+        {
+            ThrowIfCancellationRequested();
+
+            proc.Start();
+            Logger.LogDiagnostic($"Started process: {proc.ProcessName} (pid {proc.Id})");
+            // once we start the process, we need to periodically poll it.
+            try
+            {
+                do
+                {
+                    Logger.LogDiagnostic("Polling process's exit status");
+                    ThrowIfCancellationRequested();
+                    if (termCondition.ShouldTerminate(proc))
+                    {
+                        Logger.LogDiagnostic($"ITerminationCondition has requested that this process be terminated");
+                        // if we're asked to terminate the process, do so.
+                        try
+                        {
+                            proc.Kill();
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            // According to MSDN, this is what gets thrown when you try to kill a process
+                            // that is not running.
+                            // Since our process could have died between the time we last
+                            // checked and now, just accept the exception and move on.
+                            // The end result is that the process isn't running anymore.
+                        }
+
+                        break;
+                    }
+
+                    Logger.LogDiagnostic("ITerminationCondition has not requested that the process be terminated");
+
+                    // sleep for a second before polling again.
+                    Thread.Sleep(1000);
+                } while (!proc.HasExited);
+
+                Logger.LogDiagnostic("Process has exited, exiting poll loop");
+            }
+            catch (OperationCanceledException)
+            {
+                // kill the process if we get Ctrl-C'd.
+                proc.Kill();
+                throw;
+            }
         }
 
         /// <summary>

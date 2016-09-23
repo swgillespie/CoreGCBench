@@ -54,7 +54,7 @@ garbage collector.
             Console.CancelKeyPress += (obj, arg) =>
             {
                 arg.Cancel = true;
-                Logger.LogWarning("Cancellation requested via Ctrl-C, cleaning up...");
+                Logger.LogWarning("Cancellation requested via Ctrl-C, cleaning up... (may take up to 30 seconds!)");
                 cts.Cancel();
             };
 
@@ -81,7 +81,9 @@ garbage collector.
                 syntax.HandleHelp = false;
                 syntax.DefineOption("h|help", ref showHelp, "Displays this message.");
                 syntax.DefineOption("v|verbose", ref verbose, "Outputs additional verbose logging.");
+#if DEBUG
                 syntax.DefineOption("d|debug", ref veryVerbose, "Outputs very verbose logging, useful for debugging.");
+#endif
                 syntax.DefineOption("break-on-startup", ref breakOnStartup, "Launches a debugger on startup. Useful for debugging only.");
                 syntax.DefineParameter("configuration", ref configFile, "The configuration file to use to configure the benchmark run.");
 

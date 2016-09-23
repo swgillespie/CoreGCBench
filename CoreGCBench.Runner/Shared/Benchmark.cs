@@ -72,7 +72,7 @@ namespace CoreGCBench.Common
         [JsonProperty(
             Required = Required.Default, 
             NullValueHandling = NullValueHandling.Ignore)]
-        public int? EndAfterTimeElapsed { get; set; } = null;
+        public int? EndAfterTimeElapsedSeconds { get; set; } = null;
 
         /// <summary>
         /// The number of times to run the benchmark, averaging all data
