@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace CoreGCBench.Runner
@@ -62,9 +63,11 @@ namespace CoreGCBench.Runner
 
         /// <summary>
         /// Logs a message at the most verbose level, so it is only printed
-        /// if the -d option is given.
+        /// if the -d option is given on debug builds and is never printed
+        /// at all on release builds.
         /// </summary>
         /// <param name="fmt">A format string to print</param>
+        [Conditional("DEBUG")]
         public static void LogDiagnostic(string fmt)
         {
             Log(Verbosity.Diagnostic, fmt);

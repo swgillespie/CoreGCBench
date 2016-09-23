@@ -92,6 +92,7 @@ namespace CoreGCBench.Runner
                 result.PerVersionResults.Add(Tuple.Create(version, versionResult));
             }
 
+            ThrowIfCancellationRequested();
             return result;
         }
 
@@ -128,6 +129,7 @@ namespace CoreGCBench.Runner
                     Path.Combine(folderName, Constants.VersionJsonName),
                     JsonConvert.SerializeObject(version));
 
+                ThrowIfCancellationRequested();
                 return result;
             }
             finally
@@ -156,6 +158,7 @@ namespace CoreGCBench.Runner
             {
                 using (ITerminationCondition condition = ConstructTerminationCondition(bench))
                 {
+                    ThrowIfCancellationRequested();
                     return RunBenchmarkImplWithIterations(version, bench, condition);
                 }
             }
@@ -178,9 +181,11 @@ namespace CoreGCBench.Runner
             // TODO(#5) today, only time-specific terminations are supported.
             if (bench.EndAfterTimeElapsedSeconds.HasValue)
             {
+                Logger.LogVerbose($"Benchmark \"{bench.Name}\" has time-based termination after {bench.EndAfterTimeElapsedSeconds.Value} seconds");
                 return new TimeTerminationCondition(TimeSpan.FromSeconds(bench.EndAfterTimeElapsedSeconds.Value));
             }
 
+            Logger.LogVerbose($"Benchmark \"{bench.Name}\" has no termination condition");
             return new NullTerminationCondition();
         }
 
@@ -247,6 +252,7 @@ namespace CoreGCBench.Runner
                 Path.Combine(Directory.GetCurrentDirectory(), Constants.BenchmarkJsonName), 
                 JsonConvert.SerializeObject(bench, Formatting.Indented));
 
+            ThrowIfCancellationRequested();
             return result;
         }
 
@@ -288,6 +294,8 @@ namespace CoreGCBench.Runner
             result.DurationMsec = (long)(proc.ExitTime - proc.StartTime).TotalMilliseconds;
             result.ExitCode = proc.ExitCode;
             result.Pid = proc.Id;
+
+            ThrowIfCancellationRequested();
             return result;
         }
 
@@ -305,14 +313,16 @@ namespace CoreGCBench.Runner
         /// <param name="proc">The unstarted process</param>
         private void RunProcess(ITerminationCondition termCondition, Process proc)
         {
+            ThrowIfCancellationRequested();
+
             proc.Start();
-            Logger.LogDiagnostic($"Started process: {proc.ProcessName} (pid {proc.Id}");
+            Logger.LogDiagnostic($"Started process: {proc.ProcessName} (pid {proc.Id})");
             // once we start the process, we need to periodically poll it.
             try
             {
-                while (!proc.HasExited)
+                do
                 {
-                    Logger.LogDiagnostic("Beginning process exit poll");
+                    Logger.LogDiagnostic("Polling process's exit status");
                     ThrowIfCancellationRequested();
                     if (termCondition.ShouldTerminate(proc))
                     {
@@ -334,9 +344,11 @@ namespace CoreGCBench.Runner
                         break;
                     }
 
+                    Logger.LogDiagnostic("ITerminationCondition has not requested that the process be terminated");
+
                     // sleep for a second before polling again.
                     Thread.Sleep(1000);
-                }
+                } while (!proc.HasExited);
 
                 Logger.LogDiagnostic("Process has exited, exiting poll loop");
             }
