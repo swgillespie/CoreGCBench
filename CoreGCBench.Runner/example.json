@@ -2,7 +2,8 @@
   "Settings": {
     "ServerGC": false,
     "ConcurrentGC": true,
-    "TestProbeRoot": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release"
+    "TestProbeRoot": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release",
+    "SharedBinaryFolder": "E:\\GitHub\\coreclr\\bin\\tests\\Windows_NT.x64.Release\\Tests\\CoreRoot"
   },
   "Suite": [
     {
@@ -16,11 +17,13 @@
   "CoreClrVersions": [
     {
       "Name": "hww",
-      "Path": "E:\\GitHub\\CoreGCBench\\Samples\\baseline"
+      "Path": "E:\\GitHub\\CoreGCBench\\Samples\\baseline",
+      "Files": ["coreclr.dll"]
     },
     {
       "Name": "sww",
-      "Path": "E:\\GitHub\\CoreGCBench\\Samples\\candidate"
+      "Path": "E:\\GitHub\\CoreGCBench\\Samples\\candidate",
+      "Files": ["coreclr.dll"]
     }
   ]
 }

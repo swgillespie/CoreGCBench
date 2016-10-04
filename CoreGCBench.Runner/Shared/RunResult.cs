@@ -69,6 +69,12 @@ namespace CoreGCBench.Common
         [JsonProperty(Required = Required.Always)]
         public string Path { get; set; }
 
+        [JsonProperty(Required = Required.DisallowNull)]
+        public List<string> Files { get; set; }
+
+        [JsonIgnore]
+        public bool IsPartial => Files != null;
+
         public override int GetHashCode()
         {
             int hash1 = Name.GetHashCode();
@@ -122,6 +128,20 @@ namespace CoreGCBench.Common
         [JsonProperty(Required = Required.Always)]
         public string TestProbeRoot { get; set; }
 
+        /// <summary>
+        /// If provided, is an absolute path to a folder to use to fill in the
+        /// files not provided by users when submitting a test run.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string SharedBinaryFolder { get; set; }
+
+        /// <summary>
+        /// Two RunSettings are equal if a run can be reproduced
+        /// equivalently using both settings. Therefore, settings such as
+        /// TestProbeRoot and SharedBinaryFolder do /not/ count.
+        /// </summary>
+        /// <param name="other">The other RunSettings to evaluate</param>
+        /// <returns>Whether the two RunSettings are equal</returns>
         public bool Equals(RunSettings other)
         {
             if (other == null)
@@ -155,11 +175,13 @@ namespace CoreGCBench.Common
         /// <summary>
         /// A description of the framework that performed this run.
         /// </summary>
+        [JsonProperty(Required = Required.Always)]
         public string FrameworkDescription { get; set; }
 
         /// <summary>
         /// The architecture of the operating system performing this run.
         /// </summary>
+        [JsonProperty(Required = Required.Always)]
         public string OSArchitecture { get; set; }
     }
 }
