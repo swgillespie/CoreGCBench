@@ -26,6 +26,7 @@ namespace CoreGCBench.Runner
 
             BenchmarkRun run;
             IDictionary<Benchmark, string> probeMap;
+            IDictionary<CoreClrVersion, PreparedCoreClrVersion> versionMap;
 
             if (!LoadConfigFile(options, out run))
             {
@@ -48,6 +49,12 @@ namespace CoreGCBench.Runner
             }
 
             options.CancellationToken.ThrowIfCancellationRequested();
+            if (!FixCoreClrVersions(run, out versionMap))
+            {
+                return;
+            }
+
+            options.CancellationToken.ThrowIfCancellationRequested();
             if (options.DryRun)
             {
                 // if this is a dry run, we're done here.
@@ -65,7 +72,7 @@ namespace CoreGCBench.Runner
 
                 Directory.SetCurrentDirectory(options.OutputDirectory);
 
-                Runner runner = new Runner(run, options, probeMap);
+                Runner runner = new Runner(run, options, probeMap, versionMap);
                 RunResult result = runner.Run();
                 PackageResults(result, options);
             }
@@ -81,6 +88,12 @@ namespace CoreGCBench.Runner
                 catch (Exception exn)
                 {
                     Logger.LogWarning($"Failed to delete output directory: {exn.Message}");
+                }
+
+                // clean up our version map, deleting any temp directories that got made.
+                foreach (var entry in versionMap)
+                {
+                    entry.Value.Dispose();
                 }
             }
         }
@@ -165,6 +178,102 @@ namespace CoreGCBench.Runner
             return false;
         }
 
+        /// <summary>
+        /// "Fixes" a CoreClrVersion by turning a possibly-incomplete CoreClrVersion definition into a full, runnable version.
+        /// Instead of providing a full "core root" directory for eacy coreclr version, users can provide individual binaries
+        /// for each version and provide a base "shared binary folder" from which all of the other binaries will be derived from.
+        /// This step ensures that all versions are fixed before running.
+        /// </summary>
+        /// <param name="run">The Benchmark whose versions will be fixed</param>
+        /// <param name="fixedVersions">The map of all fixed versions, if the fixing was successful.</param>
+        /// <returns></returns>
+        private static bool FixCoreClrVersions(BenchmarkRun run, out IDictionary<CoreClrVersion, PreparedCoreClrVersion> fixedVersions)
+        {
+            fixedVersions = new Dictionary<CoreClrVersion, PreparedCoreClrVersion>();
+            foreach (var version in run.CoreClrVersions)
+            {
+                PreparedCoreClrVersion preparedVersion;
+                if (!FixSingleCoreClrVersion(version, run.Settings, out preparedVersion))
+                {
+                    return false;
+                }
+
+                fixedVersions[version] = preparedVersion;
+            }
+
+            return true;
+        }
+
+        private static bool FixSingleCoreClrVersion(CoreClrVersion version, RunSettings settings, out PreparedCoreClrVersion preparedVersion)
+        {
+            // is this a fully-specified version (i.e. the user gave us a full directory)? if so, there's nothing
+            // to do here.
+            if (!version.IsPartial)
+            {
+                Logger.LogVerbose($"Version {version.Name} is complete and needs no additional processing");
+                preparedVersion = new PreparedCoreClrVersion(version);
+                return true;
+            }
+
+            // otherwise, we're going to need to create a new directory and populate it.
+            // the idea here is to use the SharedBinaryFolder option given to us to populate
+            // the new folder we create and then copy the user provided files on top of it.
+            //
+            // we need settings.SharedBinaryFolder to be present for this, so we error here
+            // if it's not.
+            if (string.IsNullOrEmpty(settings.SharedBinaryFolder))
+            {
+                Logger.LogError("The SharedBinaryFolder settings key was required and not provided. See the documentation for more information.");
+                preparedVersion = null;
+                return false;
+            }
+
+            if (!Directory.Exists(settings.SharedBinaryFolder))
+            {
+                Logger.LogError("The SharedBinaryFolder settings key referred to a folder that does not exist. See the documentation for more information.");
+                preparedVersion = null;
+                return false;
+            }
+
+            Debug.Assert(Path.IsPathRooted(settings.SharedBinaryFolder));
+            var tempPath = Path.Combine(Path.GetTempPath(), "CoreGCBench.Runner", Guid.NewGuid().ToString());
+
+            Logger.LogVerbose($"Version {version.Name} is partial, using temp directory {tempPath}");
+            Directory.CreateDirectory(tempPath);
+
+            Logger.LogVerbose($"Copying files from {settings.SharedBinaryFolder} to {tempPath}");
+            CopyDirectory(version.Path, tempPath);
+
+            foreach (var file in version.Files)
+            {
+                Logger.LogVerbose($"Copying file {file} from {version.Path} to {tempPath}");
+                string filePath = Path.Combine(version.Path, file);
+                if (!File.Exists(filePath))
+                {
+                    Logger.LogError($"File {file} for version {version.Name} does not exist at location {version.Path}");
+                    preparedVersion = null;
+                    return false;
+                }
+
+                string targetPath = filePath.Replace(version.Path, tempPath);
+                File.Copy(filePath, targetPath);
+            }
+
+            Logger.LogVerbose($"Successfully created temporary version folder at {tempPath}");
+            preparedVersion = new PreparedCoreClrVersion(version, tempPath);
+            return true;
+        }
+
+        private static void CopyDirectory(string path, string tempPath)
+        {
+            foreach (var entry in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+            {
+                string targetPath = entry.Replace(path, tempPath);
+                Logger.LogDiagnostic($"Copying file: {entry} -> {targetPath}");
+                File.Copy(entry, targetPath);
+            }
+        }
+
         private static bool LoadConfigFile(Options opts, out BenchmarkRun run)
         {
             try
@@ -242,6 +351,22 @@ namespace CoreGCBench.Runner
             {
                 Logger.LogError($"Probe path {run.Settings.TestProbeRoot} is not absolute!");
                 return false;
+            }
+
+            if (run.Settings.SharedBinaryFolder != null)
+            {
+                if (!Path.IsPathRooted(run.Settings.SharedBinaryFolder))
+                {
+                    Logger.LogError($"Shared binary path {run.Settings.SharedBinaryFolder} is not absolute!");
+                    return false;
+                }
+
+                string coreRun = Path.Combine(run.Settings.SharedBinaryFolder, Utils.CoreRunName);
+                if (!File.Exists(coreRun))
+                {
+                    Logger.LogError($"Corerun not found on path {run.Settings.SharedBinaryFolder}.");
+                    return false;
+                }
             }
 
             Logger.LogVerbose("Validation successful");

@@ -50,13 +50,18 @@ namespace CoreGCBench.Runner
         /// </summary>
         private IDictionary<Benchmark, string> m_executableProbeMap;
 
+        private IDictionary<CoreClrVersion, PreparedCoreClrVersion> m_versionMap;
+
         /// <summary>
         /// Constructs a new runner that will run the given suite
         /// with the given options.
         /// </summary>
         /// <param name="suite">The benchmark suite to run. Must be validated already.</param>
         /// <param name="options">The options governing the benchmark run</param>
-        public Runner(BenchmarkRun suite, Options options, IDictionary<Benchmark, string> executableProbeMap)
+        public Runner(BenchmarkRun suite,
+            Options options, 
+            IDictionary<Benchmark, string> executableProbeMap,
+            IDictionary<CoreClrVersion, PreparedCoreClrVersion> versionMap)
         {
             Debug.Assert(suite != null);
             Debug.Assert(options != null);
@@ -64,6 +69,7 @@ namespace CoreGCBench.Runner
             m_options = options;
             m_traceCollector = TraceCollectorFactory.Create();
             m_executableProbeMap = executableProbeMap;
+            m_versionMap = versionMap;
         }
 
         /// <summary>
@@ -88,7 +94,9 @@ namespace CoreGCBench.Runner
                 Debug.Assert(!string.IsNullOrEmpty(version.Path));
                 Debug.Assert(!string.IsNullOrEmpty(version.Name));
                 Debug.Assert(Directory.Exists(version.Path));
-                CoreclrVersionRunResult versionResult = RunVersion(version);
+                Debug.Assert(m_versionMap.ContainsKey(version));
+                PreparedCoreClrVersion preparedVersion = m_versionMap[version];
+                CoreclrVersionRunResult versionResult = RunVersion(preparedVersion);
                 result.PerVersionResults.Add(Tuple.Create(version, versionResult));
             }
 
@@ -103,7 +111,7 @@ namespace CoreGCBench.Runner
         /// <param name="coreRootPath">The path to CORE_ROOT for the version
         /// of CoreCLR being tested.</param>
         /// <returns>The results of this run</returns>
-        private CoreclrVersionRunResult RunVersion(CoreClrVersion version)
+        private CoreclrVersionRunResult RunVersion(PreparedCoreClrVersion version)
         {
             ThrowIfCancellationRequested();
             Logger.LogAlways($"Beginning run of version \"{version.Name}\"");
@@ -146,7 +154,7 @@ namespace CoreGCBench.Runner
         /// <param name="version">The version of CoreCLR to run on</param>
         /// <param name="bench">The benchmark to run</param>
         /// <returns>The result from running the benchmark</returns>
-        private BenchmarkResult RunBenchmark(CoreClrVersion version, Benchmark bench)
+        private BenchmarkResult RunBenchmark(PreparedCoreClrVersion version, Benchmark bench)
         {
             ThrowIfCancellationRequested();
             Logger.LogAlways($"Running benchmark {bench.Name}");
@@ -197,7 +205,7 @@ namespace CoreGCBench.Runner
         /// <param name="bench">The benchmark to run</param>
         /// <param name="termCondition">The termination condition for this benchmark</param>
         /// <returns>The result of running the benchmark</returns>
-        private BenchmarkResult RunBenchmarkImplWithIterations(CoreClrVersion version, Benchmark bench, TerminationCondition termCondition)
+        private BenchmarkResult RunBenchmarkImplWithIterations(PreparedCoreClrVersion version, Benchmark bench, TerminationCondition termCondition)
         {
             ThrowIfCancellationRequested();
             Logger.LogAlways($"Running iterations for benchmark {bench.Name}");
@@ -264,7 +272,7 @@ namespace CoreGCBench.Runner
         /// <param name="bench">The benchmark to run</param>
         /// <param name="termCondition">The termination condition for this benchmark</param>
         /// <returns>The result from running the benchmark</returns>
-        private IterationResult RunBenchmarkImpl(CoreClrVersion version, Benchmark bench, TerminationCondition termCondition)
+        private IterationResult RunBenchmarkImpl(PreparedCoreClrVersion version, Benchmark bench, TerminationCondition termCondition)
         {
             ThrowIfCancellationRequested();
             string coreRun = Path.Combine(version.Path, Utils.CoreRunName);
@@ -368,6 +376,5 @@ namespace CoreGCBench.Runner
         {
             m_options.CancellationToken.ThrowIfCancellationRequested();
         }
-
     }
 }
