@@ -17,7 +17,3 @@ issues on things that annoy you and I will do my best to attend to them.
 
 If you'd like to use these utilities, check out the documentation: https://github.com/swgillespie/CoreGCBench/wiki.
 All documentation will be centered around the wiki.
-
-### Known Issues
-* [Control+C leaks a PerfView session and is a huge pain to clean up](https://github.com/swgillespie/CoreGCBench/issues/2) -
-Until this is fixed you should not Control+C the runner process.
