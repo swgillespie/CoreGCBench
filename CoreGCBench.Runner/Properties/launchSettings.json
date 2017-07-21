@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "CoreGCBench.Runner": {
-      "commandName": "Project",
-      "commandLineArgs": "-d example.json"
-    }
-  }
-}
