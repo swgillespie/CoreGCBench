@@ -269,6 +269,11 @@ namespace CoreGCBench.Runner
             foreach (var entry in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
             {
                 string targetPath = entry.Replace(path, tempPath);
+                var parentPath = Directory.GetParent(targetPath);
+                if (!parentPath.Exists)
+                {
+                    Directory.CreateDirectory(parentPath.FullName);
+                }
                 Logger.LogDiagnostic($"Copying file: {entry} -> {targetPath}");
                 File.Copy(entry, targetPath);
             }
